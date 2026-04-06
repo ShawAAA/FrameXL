@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "59bK/Weou48=",
+  "success": true,
+  "projectFilePath": "c:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\exceldna.addin\\1.9.0-alpha2\\exceldna.addin.1.9.0-alpha2.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\exceldna.integration\\1.9.0-alpha2\\exceldna.integration.1.9.0-alpha2.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\exceldna.intellisense\\1.9.0-alpha2\\exceldna.intellisense.1.9.0-alpha2.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\exceldna.interop\\15.0.1\\exceldna.interop.15.0.1.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\mathnet.numerics\\5.0.0\\mathnet.numerics.5.0.0.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\microsoft.netcore.app.ref\\6.0.36\\microsoft.netcore.app.ref.6.0.36.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\6.0.36\\microsoft.windowsdesktop.app.ref.6.0.36.nupkg.sha512",
+    "C:\\Users\\Nebula PC\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\6.0.36\\microsoft.aspnetcore.app.ref.6.0.36.nupkg.sha512"
+  ],
+  "logs": []
+}

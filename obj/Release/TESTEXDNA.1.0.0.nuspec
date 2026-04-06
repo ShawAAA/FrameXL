@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>TESTEXDNA</id>
+    <version>1.0.0</version>
+    <authors>TESTEXDNA</authors>
+    <description>Package Description</description>
+    <repository type="git" commit="e8d2ba1df6f2a44fe65cff8c6d34dfe3573c4c79" />
+    <dependencies>
+      <group targetFramework="net6.0-windows7.0">
+        <dependency id="ExcelDna.Addin" version="1.9.0-alpha2" exclude="Build,Analyzers" />
+        <dependency id="ExcelDna.Integration" version="1.9.0-alpha2" exclude="Build,Analyzers" />
+        <dependency id="ExcelDna.IntelliSense" version="1.9.0-alpha2" exclude="Build,Analyzers" />
+        <dependency id="ExcelDna.Interop" version="15.0.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+    <frameworkReferences>
+      <group targetFramework="net6.0-windows7.0">
+        <frameworkReference name="Microsoft.WindowsDesktop.App.WindowsForms" />
+      </group>
+    </frameworkReferences>
+  </metadata>
+  <files>
+    <file src="C:\Users\Nebula PC\OneDrive\Documents\ASCONS-Local\ASCONS\bin\Release\net6.0-windows\TESTEXDNA.runtimeconfig.json" target="lib\net6.0-windows7.0\TESTEXDNA.runtimeconfig.json" />
+    <file src="C:\Users\Nebula PC\OneDrive\Documents\ASCONS-Local\ASCONS\bin\Release\net6.0-windows\TESTEXDNA.dll" target="lib\net6.0-windows7.0\TESTEXDNA.dll" />
+  </files>
+</package>
