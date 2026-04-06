@@ -1,2 +1,3 @@
-# ASCONS
-Concrete design/analysis tool to AS.
+# FrameXL
+
+Structural analysis in 2d for excel.
