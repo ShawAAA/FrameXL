@@ -1814,9 +1814,17 @@ namespace TESTEXDNA
 
             return outarray;
         }
-        public static double[,] bloadsfilter(object[,] inarray)
+        public static double[,] bloadsfilter(object[,] inarray,double[,] telements)
         {
-            double[,] outarray=new double[inarray.GetLength(0),inarray.GetLength(1)];
+            List<int> memberlist;
+            List<int> inlist= new List<int>();
+            List<double[]> outlist=new List<double[]>();
+            double[] temparray;
+            string memberstring;
+            for (int i = 1; i <= telements.GetLength(0);i++)
+            {
+                inlist.Add(i);
+            }
             bool patchmarker;
             double LHSpercent;
             double LHSload;
@@ -1824,72 +1832,96 @@ namespace TESTEXDNA
             double RHSload;
             for (int i = 0; i < inarray.GetLength(0); i++)
             {
-                outarray[i,0]=(double)inarray[i,0];
-                outarray[i,1]=(double)inarray[i,1];
-                if ((String)inarray[i,2]=="Point Load")
+                memberstring=inarray[i,1].ToString()?? string.Empty;
+                if (memberstring.ToLower() == "all")
                 {
-                    patchmarker=false;
-                    outarray[i,2]=0;
+                    memberstring="-1";
                 }
-                else
+                memberlist = stiffnessmatcalcs.lcmemberstringread(memberstring, telements.GetLength(0),inlist);
+                foreach(int member in memberlist)
                 {
-                    patchmarker=true;
-                    outarray[i,2]=1;
-                }
-                switch ((String)inarray[i,3])
-                {
-                    case "Local":
-                        outarray[i,3]=0;
-                        break;
-                    case "Global":
-                        outarray[i,3]=1;
-                        break;
-                    case "Global Projected":
-                        outarray[i,3]=2;
-                        break;
-                }
-                switch (inarray[i, 4])
-                {
-                    case "x":
-                        outarray[i,4]=0;
-                        break;
-                    case "y":
-                        outarray[i,4]=1;
-                        break;
-                    case "zz":
-                        outarray[i,4]=2;
-                        break;
-                }
-                if (patchmarker)
-                {
-                    LHSpercent=(double)inarray[i,5];
-                    LHSload=(double)inarray[i,6];
-                    RHSpercent=(double)inarray[i,7];
-                    RHSload=(double)inarray[i,8];
-                    if (LHSpercent < RHSpercent)
+                    temparray=new double[9];
+                    temparray[0]=(double)inarray[i,0];
+                    temparray[1]=member;
+                    if ((String)inarray[i,2]=="Point Load")
                     {
-                        outarray[i,5]=LHSpercent;
-                        outarray[i,6]=LHSload;
-                        outarray[i,7]=RHSpercent;
-                        outarray[i,8]=RHSload;
+                        patchmarker=false;
+                        temparray[2]=0;
                     }
                     else
                     {
-                        outarray[i,5]=RHSpercent;
-                        outarray[i,6]=RHSload;
-                        outarray[i,7]=LHSpercent;
-                        outarray[i,8]=LHSload;
+                        patchmarker=true;
+                        temparray[2]=1;
                     }
-                }
-                else
-                {
-                    outarray[i,5]=(double)inarray[i,5];
-                    outarray[i,6]=(double)inarray[i,6];
-                    outarray[i,7]=0;
-                    outarray[i,8]=0;
+                    switch ((String)inarray[i,3])
+                    {
+                        case "Local":
+                            temparray[3]=0;
+                            break;
+                        case "Global":
+                            temparray[3]=1;
+                            break;
+                        case "Global Projected":
+                            temparray[3]=2;
+                            break;
+                    }
+                    switch (inarray[i, 4])
+                    {
+                        case "x":
+                            temparray[4]=0;
+                            break;
+                        case "y":
+                            temparray[4]=1;
+                            break;
+                        case "zz":
+                            temparray[4]=2;
+                            break;
+                    }
+                    if (patchmarker)
+                    {
+                        LHSpercent=(double)inarray[i,5];
+                        LHSload=(double)inarray[i,6];
+                        RHSpercent=(double)inarray[i,7];
+                        RHSload=(double)inarray[i,8];
+                        if (LHSpercent < RHSpercent)
+                        {
+                            temparray[5]=LHSpercent;
+                            temparray[6]=LHSload;
+                            temparray[7]=RHSpercent;
+                            temparray[8]=RHSload;
+                        }
+                        else
+                        {
+                            temparray[5]=RHSpercent;
+                            temparray[6]=RHSload;
+                            temparray[7]=LHSpercent;
+                            temparray[8]=LHSload;
+                        }
+                    }
+                    else
+                    {
+                        temparray[5]=(double)inarray[i,5];
+                        temparray[6]=(double)inarray[i,6];
+                        temparray[7]=0;
+                        temparray[8]=0;
+                    }
+                    outlist.Add(temparray);
                 }
                 
             }
+            double[,] outarray=new double[outlist.Count,inarray.GetLength(1)];
+            for (int i = 0; i < outlist.Count; i++)
+            {
+                if (outlist[i][1]>telements.GetLength(0) || outlist[i][1] < 1)
+                {
+                    throw new ArgumentNullException("Provided node index is out of range");
+                }
+                for (int j = 0; j < inarray.GetLength(1); j++)
+                {
+                    outarray[i,j]=outlist[i][j];
+                }
+            }
+
             return outarray;
         }
         public static object[,] extractsfilter(object[,] inarray)
