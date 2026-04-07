@@ -70,3 +70,4 @@ c:\Users\Nebula PC\OneDrive\Documents\EXDNA-BLANK\EXDNA-BLANK\obj\Debug\net6.0-w
 c:\Users\Nebula PC\OneDrive\Documents\EXDNA-BLANK\EXDNA-BLANK\obj\Debug\net6.0-windows\TESTEXDNA.pdb
 c:\Users\Nebula PC\OneDrive\Documents\EXDNA-BLANK\EXDNA-BLANK\obj\Debug\net6.0-windows\TESTEXDNA.genruntimeconfig.cache
 c:\Users\Nebula PC\OneDrive\Documents\EXDNA-BLANK\EXDNA-BLANK\bin\Debug\net6.0-windows\MathNet.Numerics.dll
+c:\Users\Nebula PC\OneDrive\Documents\EXDNA-BLANK\EXDNA-BLANK\obj\Debug\net6.0-windows\TESTEXDNA.sourcelink.json

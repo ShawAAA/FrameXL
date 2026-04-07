@@ -180,8 +180,8 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         effectseries.Format.Line.Visible = MsoTriState.msoTrue;;
         effectseries.Format.Line.Weight=2;
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].formula2 = "=structuralanalysisgrapheffects(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+"," +resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address +")";
-        effectseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 4].resize[500, 1].address];
-        effectseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 5].resize[500, 1].address];
+        effectseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 4].resize[2000, 1].address];
+        effectseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 5].resize[2000, 1].address];
         chrt.Axes(1).HasTitle = true;
         chrt.Axes(1).AxisTitle.Text = "x (m)";
         chrt.Axes(2).HasTitle = true;

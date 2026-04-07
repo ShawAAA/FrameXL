@@ -788,6 +788,10 @@ namespace TESTEXDNA
 
                         break;
                 }
+                if (holder.IndexOf("NaN") != -1)
+                {
+                    return new string[,] {{"Calculations are invalid and have produced one or more results of 'NaN'/infinite, confirm that all degrees of freedom have been adequately constrained."}};
+                }
                 outarray[i,0]=holder;
             }
             double ln=0;
@@ -1753,27 +1757,61 @@ namespace TESTEXDNA
 
             return outarray;
         }
-        public static double[,] nloadsfilter(object[,] inarray)
+        public static double[,] nloadsfilter(object[,] inarray, double[,] tnodes)
         {
-            double[,] outarray=new double[inarray.GetLength(0),inarray.GetLength(1)];
+            
+            List<int> memberlist;
+            List<int> inlist= new List<int>();
+            List<double[]> outlist=new List<double[]>();
+            double[] temparray;
+            string memberstring;
+            for (int i = 1; i <= tnodes.GetLength(0);i++)
+            {
+                inlist.Add(i);
+            }
             for (int i = 0; i < inarray.GetLength(0); i++)
             {
-                outarray[i,0]=(double)inarray[i,0];
-                outarray[i,1]=(double)inarray[i,1];
-                outarray[i,3]=(double)inarray[i,3];
-                switch (inarray[i, 2])
+                memberstring=inarray[i,1].ToString()?? string.Empty;
+                if (memberstring.ToLower() == "all")
                 {
-                    case "x":
-                        outarray[i,2]=0;
-                        break;
-                    case "y":
-                        outarray[i,2]=1;
-                        break;
-                    case "zz":
-                        outarray[i,2]=2;
-                        break;
+                    memberstring="-1";
+                }
+                memberlist = stiffnessmatcalcs.lcmemberstringread(memberstring, tnodes.GetLength(0),inlist);
+                foreach(int member in memberlist)
+                {
+                    temparray=new double[4];
+                    temparray[0]=(double)inarray[i,0];
+                    temparray[1]=(double)member;
+                    switch (inarray[i, 2])
+                    {
+                        case "x":
+                            temparray[2]=0;
+                            break;
+                        case "y":
+                            temparray[2]=1;
+                            break;
+                        case "zz":
+                            temparray[2]=2;
+                            break;
+                    }
+                    temparray[3]=(double)inarray[i,3];
+                    outlist.Add(temparray);
+                }
+                
+            }
+            double[,] outarray=new double[outlist.Count,inarray.GetLength(1)];
+            for (int i = 0; i < outlist.Count; i++)
+            {
+                if (outlist[i][1]>tnodes.GetLength(0) || outlist[i][1] < 1)
+                {
+                    throw new ArgumentNullException("Provided node index is out of range");
+                }
+                for (int j = 0; j < inarray.GetLength(1); j++)
+                {
+                    outarray[i,j]=outlist[i][j];
                 }
             }
+
             return outarray;
         }
         public static double[,] bloadsfilter(object[,] inarray)

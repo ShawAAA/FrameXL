@@ -42,7 +42,7 @@
             double[,] tnodes=interfacefunctions.nodefilter(interfacefunctions.filterarrayempties(nodes));
             Dictionary<(int,int),List<double[]>> tnsprings=interfacefunctions.tnsprings(interfacefunctions.filterarrayempties(nodes));
             double[,] telements=interfacefunctions.elementfilter(interfacefunctions.filterarrayempties(elements));
-            double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads));
+            double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
             double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads));
             object[,] textracts=interfacefunctions.extractsfilter(interfacefunctions.filterarrayempties(extracts));
 
@@ -63,7 +63,7 @@
             double[,] tnodes=interfacefunctions.nodefilter(interfacefunctions.filterarrayempties(nodes));
             Dictionary<(int,int),List<double[]>> tnsprings=interfacefunctions.tnsprings(interfacefunctions.filterarrayempties(nodes));
             double[,] telements=interfacefunctions.elementfilter(interfacefunctions.filterarrayempties(elements));
-            double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads));
+            double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
             double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads));
             object[,] textracts=new object[,] {{-1,0,0,-1},{-1,1,0,-1},{-1,0,1,-1},{-1,1,1,-1}};
 
