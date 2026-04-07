@@ -65,6 +65,12 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].addcomment("Load applied in global coordinates.");
       cmt.Shape.TextFrame.Characters().Font.Bold = false;
       cmt.Shape.TextFrame.AutoSize = true;
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,1].addcomment("Node lists can be given as 'All', a list of indexes '1,2,3' or a range '1to3,5to-1'.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,3].addcomment("Magnitude or equation for magnitude. Equations are input as '#index+lc+2*x+y+2', or similar, with properties derived from the assigned node. ");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 2].validation.add(3, 3, 3, "x,y,zz", 0);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 2].validation.add(3, 3, 3, "x,y,zz", 0);
       offs=offs+6;
@@ -73,6 +79,12 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       object[] elementloads2 = new object[] { 3, 1, "Point Load","Global Projected","y",0.5,-1};
       createinputblock(xlApp, wb, ws, cell, offs, "Beam Load Inputs", elementloads1, 1, elementloads2);
       cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,3].addcomment("Local applied x/axial, y/vertical and zz/rotational. Global Projected Applied across the projected length of the element (N/A for rotation).");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,1].addcomment("Element lists can be given as 'All', a list of indexes '1,2,3' or a range '1to3,5to-1'.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,6].addcomment("Magnitude or equation for magnitude. Equations are input as '#index+lc+2*x+y+2', or similar, with properties derived from the position at which the load 'turns-on' evaluated at either the point load or either side of the path.");
       cmt.Shape.TextFrame.Characters().Font.Bold = false;
       cmt.Shape.TextFrame.AutoSize = true;
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 2].validation.add(3, 3, 3, "Point Load,Patch Load", 0);

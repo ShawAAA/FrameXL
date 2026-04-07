@@ -43,7 +43,7 @@
             Dictionary<(int,int),List<double[]>> tnsprings=interfacefunctions.tnsprings(interfacefunctions.filterarrayempties(nodes));
             double[,] telements=interfacefunctions.elementfilter(interfacefunctions.filterarrayempties(elements));
             double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
-            double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements);
+            double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements,tnodes);
             object[,] textracts=interfacefunctions.extractsfilter(interfacefunctions.filterarrayempties(extracts));
 
             return controllerclass.controller(tnodes,telements,tnloads,tbloads,textracts,tnsprings);
@@ -64,7 +64,7 @@
             Dictionary<(int,int),List<double[]>> tnsprings=interfacefunctions.tnsprings(interfacefunctions.filterarrayempties(nodes));
             double[,] telements=interfacefunctions.elementfilter(interfacefunctions.filterarrayempties(elements));
             double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
-            double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements);
+            double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements,tnodes);
             object[,] textracts=new object[,] {{-1,0,0,-1},{-1,1,0,-1},{-1,0,1,-1},{-1,1,1,-1}};
 
             return controllerclass.controller(tnodes,telements,tnloads,tbloads,textracts,tnsprings);
@@ -111,6 +111,25 @@
         {
             return graphingtablefunctions.grapheffects(interfacefunctions.filterarrayempties(nodes),interfacefunctions.filterarrayempties(Elements),results,requests);
         }
+        [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =false,Description = "dbg")]
+        public static double Structuralanalysisdbg(
+            [ExcelArgument(Name = "lc")]
+            double[,] lc,
+            [ExcelArgument(Name = "index")]
+            double[,] index,
+            [ExcelArgument(Name = "x")]
+            double[,] x,
+            [ExcelArgument(Name = "y")]
+            double[,] y,
+            [ExcelArgument(Name = "zz")]
+            double[,] zz,
+            [ExcelArgument(Name = "eqns")]
+            string[,] eqns)
+
+        {
+            return parseclass.parseloadequations(lc[0,0],index[0,0],x[0,0],y[0,0],zz[0,0],eqns[0,0]);
+        }
+        
         
     }
 }

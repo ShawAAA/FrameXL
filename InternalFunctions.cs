@@ -688,7 +688,7 @@ namespace TESTEXDNA
                 nextindex=txt.IndexOf(",", startstring);
                 while (nextindex != -1)
                 {
-                    holder=stiffnessmatcalcs.lcmemberfragment(txt.Substring(startstring,nextindex),cap);
+                    holder=stiffnessmatcalcs.lcmemberfragment(txt.Substring(startstring,nextindex-startstring),cap);
                     for (int i = 0; i < holder.Count; i++)
                     {
                         outlist.Add(holder[i]);
@@ -1794,7 +1794,14 @@ namespace TESTEXDNA
                             temparray[2]=2;
                             break;
                     }
-                    temparray[3]=(double)inarray[i,3];
+                    if ((inarray[i, 3].ToString()?? string.Empty).Substring(0,1) == "#")
+                    {
+                        temparray[3]=parseclass.parseloadequations(temparray[0],temparray[1],tnodes[(int)temparray[1]-1,0],tnodes[(int)temparray[1]-1,1],0,(inarray[i, 3].ToString()?? string.Empty).Substring(1));
+                    }
+                    else
+                    {
+                        temparray[3]=(double)inarray[i,3];
+                    }
                     outlist.Add(temparray);
                 }
                 
@@ -1814,7 +1821,7 @@ namespace TESTEXDNA
 
             return outarray;
         }
-        public static double[,] bloadsfilter(object[,] inarray,double[,] telements)
+        public static double[,] bloadsfilter(object[,] inarray,double[,] telements,double[,] tnodes)
         {
             List<int> memberlist;
             List<int> inlist= new List<int>();
@@ -1830,6 +1837,10 @@ namespace TESTEXDNA
             double LHSload;
             double RHSpercent;
             double RHSload;
+            double x1;
+            double y1;
+            double x2;
+            double y2;
             for (int i = 0; i < inarray.GetLength(0); i++)
             {
                 memberstring=inarray[i,1].ToString()?? string.Empty;
@@ -1880,28 +1891,67 @@ namespace TESTEXDNA
                     if (patchmarker)
                     {
                         LHSpercent=(double)inarray[i,5];
-                        LHSload=(double)inarray[i,6];
+                        
                         RHSpercent=(double)inarray[i,7];
-                        RHSload=(double)inarray[i,8];
-                        if (LHSpercent < RHSpercent)
+                        
+                        if ((inarray[i, 6].ToString()?? string.Empty).Substring(0,1) == "#")
                         {
-                            temparray[5]=LHSpercent;
-                            temparray[6]=LHSload;
-                            temparray[7]=RHSpercent;
-                            temparray[8]=RHSload;
+                            x1=tnodes[(int)telements[(int)temparray[1]-1,0]-1,0];
+                            y1=tnodes[(int)telements[(int)temparray[1]-1,0]-1,1];
+                            x2=tnodes[(int)telements[(int)temparray[1]-1,1]-1,0];
+                            y2=tnodes[(int)telements[(int)temparray[1]-1,1]-1,1];
+                            if (LHSpercent < RHSpercent)
+                            {
+                                temparray[5]=LHSpercent;
+                                temparray[6]=parseclass.parseloadequations(temparray[0],temparray[1],x1+LHSpercent*(x2-x1),y1+LHSpercent*(y2-y1),0,(inarray[i, 6].ToString()?? string.Empty).Substring(1));
+                                temparray[7]=RHSpercent;
+                                temparray[8]=parseclass.parseloadequations(temparray[0],temparray[1],x1+RHSpercent*(x2-x1),y1+RHSpercent*(y2-y1),0,(inarray[i, 6].ToString()?? string.Empty).Substring(1));
+                            }
+                            else
+                            {
+                                temparray[5]=RHSpercent;
+                                temparray[6]=parseclass.parseloadequations(temparray[0],temparray[1],x1+RHSpercent*(x2-x1),y1+RHSpercent*(y2-y1),0,(inarray[i, 6].ToString()?? string.Empty).Substring(1));
+                                temparray[7]=LHSpercent;
+                                temparray[8]=parseclass.parseloadequations(temparray[0],temparray[1],x1+LHSpercent*(x2-x1),y1+LHSpercent*(y2-y1),0,(inarray[i, 6].ToString()?? string.Empty).Substring(1));
+                            }
                         }
                         else
                         {
-                            temparray[5]=RHSpercent;
-                            temparray[6]=RHSload;
-                            temparray[7]=LHSpercent;
-                            temparray[8]=LHSload;
+                            LHSload=(double)inarray[i,6];
+                            RHSload=(double)inarray[i,8];
+                            if (LHSpercent < RHSpercent)
+                            {
+                                temparray[5]=LHSpercent;
+                                temparray[6]=LHSload;
+                                temparray[7]=RHSpercent;
+                                temparray[8]=RHSload;
+                            }
+                            else
+                            {
+                                temparray[5]=RHSpercent;
+                                temparray[6]=RHSload;
+                                temparray[7]=LHSpercent;
+                                temparray[8]=LHSload;
+                            }
                         }
+                        
                     }
                     else
                     {
                         temparray[5]=(double)inarray[i,5];
-                        temparray[6]=(double)inarray[i,6];
+                        if ((inarray[i, 6].ToString()?? string.Empty).Substring(0,1) == "#")
+                        {
+                            x1=tnodes[(int)telements[(int)temparray[1]-1,0]-1,0];
+                            y1=tnodes[(int)telements[(int)temparray[1]-1,0]-1,1];
+                            x2=tnodes[(int)telements[(int)temparray[1]-1,1]-1,0];
+                            y2=tnodes[(int)telements[(int)temparray[1]-1,1]-1,1];
+                            temparray[6]=parseclass.parseloadequations(temparray[0],temparray[1],x1+(double)inarray[i,5]*(x2-x1),y1+(double)inarray[i,5]*(y2-y1),0,(inarray[i, 6].ToString()?? string.Empty).Substring(1));
+                        }
+                        else
+                        {
+                            temparray[6]=(double)inarray[i,6];
+                        }
+
                         temparray[7]=0;
                         temparray[8]=0;
                     }
@@ -2523,6 +2573,60 @@ namespace TESTEXDNA
                 }
             }
             return outlist;
+        }
+    }
+    class parseclass
+    {
+        public static double parseloadequations(double lc, double index, double x, double y,double zz,string eqn)
+        {
+             System.Data.DataTable table = new System.Data.DataTable ();
+
+            // Create the first column.
+            DataColumn LCColumn = new DataColumn();
+            LCColumn.DataType = System.Type.GetType("System.Decimal");
+            LCColumn.ColumnName = "lc";
+            LCColumn.DefaultValue = lc;
+            
+            DataColumn indexColumn = new DataColumn();
+            indexColumn.DataType = System.Type.GetType("System.Decimal");
+            indexColumn.ColumnName = "index";
+            indexColumn.DefaultValue = index;
+
+            DataColumn xColumn = new DataColumn();
+            xColumn.DataType = System.Type.GetType("System.Decimal");
+            xColumn.ColumnName = "x";
+            xColumn.DefaultValue = x;
+
+            DataColumn yColumn = new DataColumn();
+            yColumn.DataType = System.Type.GetType("System.Decimal");
+            yColumn.ColumnName = "y";
+            yColumn.DefaultValue = y;
+
+            DataColumn zzColumn = new DataColumn();
+            zzColumn.DataType = System.Type.GetType("System.Decimal");
+            zzColumn.ColumnName = "zz";
+            zzColumn.DefaultValue = zz;;
+
+            DataColumn loadColumn = new DataColumn();
+            loadColumn.DataType = System.Type.GetType("System.Decimal");
+            loadColumn.ColumnName = "load";
+            loadColumn.Expression = eqn;
+
+
+
+            // Add columns to DataTable.
+            table.Columns.Add(LCColumn);
+            table.Columns.Add(indexColumn);
+            table.Columns.Add(xColumn);
+            table.Columns.Add(yColumn);
+            table.Columns.Add(zzColumn);
+            table.Columns.Add(loadColumn);
+
+            DataRow row = table.NewRow();
+            table.Rows.Add(row);
+
+            double ld = double.Parse(table.Rows[0]["load"].ToString() ?? "0");
+            return ld;
         }
     }
     class controllerclass
