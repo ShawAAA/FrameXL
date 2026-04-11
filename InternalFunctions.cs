@@ -2223,9 +2223,13 @@ namespace TESTEXDNA
             {
                 actionsdisplacements=0;
             }
+            else if((String)requests[0, 5] == "Displacements")
+            {
+                actionsdisplacements=2;
+            }
             else
             {
-                actionsdisplacements=1;
+                actionsdisplacements=4;
             }
             if ((String)requests[0, 6] == "Nodes")
             {
@@ -2233,60 +2237,69 @@ namespace TESTEXDNA
             }
             else
             {
-                nodeselements=2;
+                nodeselements=1;
             }
             object[,] outholder=new object[0,0];
             switch (actionsdisplacements + nodeselements)
             {
                 case 0:
-                    outholder=graphingtablefunctions.graphnodeactions(nodes, tabholder,dirnindex,scale,graphrange);
+                    outholder=graphingtablefunctions.graphnodeactions(nodes, tabholder,scale,graphrange);
                     break;
                 case 1:
-                    outholder=graphingtablefunctions.graphnodedisplacements(nodes, tabholder,scale);
+                    outholder=graphingtablefunctions.graphelementactions(nodes,elements, tabholder,dirnindex,scale,graphrange); 
                     break;
                 case 2:
-                    outholder=graphingtablefunctions.graphelementactions(nodes,elements, tabholder,dirnindex,scale,graphrange);
+                    outholder=graphingtablefunctions.graphnodedisplacements(nodes, tabholder,scale);
                     break;
                 case 3:
                     outholder=graphingtablefunctions.graphelementdisplacements(nodes,elements, tabholder,scale);
+                    break;
+                case 4:
+                    outholder=graphingtablefunctions.graphnodeloads(nodes, tabholder,scale,graphrange);
+                    break;
+                case 5:
+
                     break;
             }
             return outholder;
 
         }
-        public static object[,] graphnodeactions(object[,] nodes, object[,] tabularised,int dirnindex,double scale,double graphrange)
+        public static object[,] graphnodeactions(object[,] nodes, object[,] tabularised,double scale,double graphrange)
         {
             List<object[]> outholder= new List<object[]>();
-            double maxmag=0;
+            double maxmagforce=0;
+            double maxmagmoment=0;
             double nodex;
             double nodey;
-            double netscale;
+            double netscaleforce;
+            double netscalemoment;
             for (int i = 0; i < nodes.GetLength(0); i++)
             {
-                maxmag=Math.Max(Math.Abs((double)tabularised[1+i,2+dirnindex]),maxmag);
+                maxmagforce=Math.Max(Math.Max(Math.Abs((double)tabularised[1+i,2]),Math.Abs((double)tabularised[1+i,3])),maxmagforce);
+                maxmagmoment=Math.Max(Math.Abs((double)tabularised[1+i,4]),maxmagmoment);
             }
-            if (maxmag == 0)
+            if (maxmagforce == 0)
             {
-                maxmag=1;
+                maxmagforce=1;
             }
-            netscale=scale/100*graphrange/maxmag/2;
+            if (maxmagmoment == 0)
+            {
+                maxmagmoment=1;
+            }
+            netscaleforce=scale/100*graphrange/maxmagforce/2;
+            netscalemoment=scale/100*graphrange/maxmagmoment/2;
             for (int i = 0; i < nodes.GetLength(0); i++)
             {
                 nodex=(double)nodes[i,0];
                 nodey=(double)nodes[i,1];
                 outholder.Add(new object[] {nodex,nodey});
-                switch (dirnindex)
-                {
-                    case 0:
-                        outholder.Add(new object[] {nodex+netscale*(double)tabularised[i+1,2+dirnindex],nodey});
-                        break;
-                    case 1:
-                        outholder.Add(new object[] {nodex,nodey+netscale*(double)tabularised[i+1,2+dirnindex]});
-                        break;
-                    case 2:
-                        outholder.Add(new object[] {nodex+netscale*((double)tabularised[i+1,2+dirnindex])/Math.Sqrt(2),nodey+netscale*((double)tabularised[i+1,2+dirnindex])/Math.Sqrt(2)});
-                        break;
-                }
+                outholder.Add(new object[] {nodex+netscaleforce*(double)tabularised[i+1,2],nodey});
+                outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                outholder.Add(new object[] {nodex,nodey});
+                outholder.Add(new object[] {nodex,nodey+netscaleforce*(double)tabularised[i+1,3]});
+                outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                outholder.Add(new object[] {nodex,nodey});
+                outholder.Add(new object[] {nodex+netscalemoment*((double)tabularised[i+1,4])/Math.Sqrt(2),nodey+netscalemoment*((double)tabularised[i+1,4])/Math.Sqrt(2)});
                 outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
             }
             object[,] outarray= new object[outholder.Count(), 2];
@@ -2311,6 +2324,70 @@ namespace TESTEXDNA
                 nodey=(double)nodes[i,1];
                 outholder.Add(new object[] {nodex,nodey});
                 outholder.Add(new object[] {nodex+netscale*((double)tabularised[i+1,2]),nodey+netscale*((double)tabularised[i+1,3])});
+                outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+            }
+            object[,] outarray= new object[outholder.Count(), 2];
+            for (int i=0; i<outholder.Count();i++)
+            {
+                outarray[i,0]=outholder[i][0];
+                outarray[i,1]=outholder[i][1];
+            }
+            return outarray;
+        }
+        public static object[,] graphnodeloads(object[,] nodes, object[,] tabularised,double scale,double graphrange)
+        {
+            List<object[]> outholder= new List<object[]>();
+            List<double[]> tablist= new List<double[]>();
+            for (int i = 1; i < tabularised.GetLength(0); i++)
+            {
+                    tablist.Add(new double[] {Convert.ToDouble(tabularised[i,1]),Convert.ToDouble(tabularised[i,3]),Convert.ToDouble(tabularised[i,4]),Convert.ToDouble(tabularised[i,5])});
+            }
+            for (int i = 0; i < tablist.Count-1; i++)
+            {
+                for (int j = tablist.Count-1; j >0; j--)
+                {
+                    if (tablist[i][0] == tablist[j][0])
+                    {
+                        tablist[i][1]=  tablist[i][1]+ tablist[j][1];
+                        tablist[i][2]=  tablist[i][2]+ tablist[j][2];
+                        tablist[i][3]=  tablist[i][3]+ tablist[j][3];
+                        tablist.RemoveAt(j);
+                    }
+                }
+            }
+            double maxmagforce=0;
+            double maxmagmoment=0;
+            double nodex;
+            double nodey;
+            double netscaleforce;
+            double netscalemoment;
+            for (int i = 1; i < tablist.Count; i++)
+            {
+                maxmagforce=Math.Max(Math.Max(Math.Abs(tablist[i][1]),Math.Abs(tablist[i][2])),maxmagforce);
+                maxmagmoment=Math.Max(Math.Abs(tablist[i][3]),maxmagmoment);
+            }
+            if (maxmagforce == 0)
+            {
+                maxmagforce=1;
+            }
+            if (maxmagmoment == 0)
+            {
+                maxmagmoment=1;
+            }
+            netscaleforce=scale/100*graphrange/maxmagforce/2;
+            netscalemoment=scale/100*graphrange/maxmagmoment/2;
+            for (int i = 0; i < tablist.Count; i++)
+            {
+                nodex=(double)nodes[(int)(tablist[i][0]-1),0];
+                nodey=(double)nodes[(int)(tablist[i][0]-1),1];
+                outholder.Add(new object[] {nodex,nodey});
+                outholder.Add(new object[] {nodex+netscaleforce*tablist[i][1],nodey});
+                outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                outholder.Add(new object[] {nodex,nodey});
+                outholder.Add(new object[] {nodex,nodey+netscaleforce*tablist[i][2]});
+                outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                outholder.Add(new object[] {nodex,nodey});
+                outholder.Add(new object[] {nodex+netscalemoment*(tablist[i][3])/Math.Sqrt(2),nodey+netscalemoment*(tablist[i][3])/Math.Sqrt(2)});
                 outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
             }
             object[,] outarray= new object[outholder.Count(), 2];
@@ -2593,21 +2670,21 @@ namespace TESTEXDNA
             HashSet<int> memberhash= new HashSet<int>();
             string lcrequest;
             string memberrequest;
-            if (((String)requests[0, 7]).ToLower()=="all")
+            if ((requests[0, 7].ToString()?? string.Empty).ToLower()=="all")
             {
                 lcrequest="-1";
             }
             else
             {
-                lcrequest=(String)requests[0, 7];
+                lcrequest=(requests[0, 7].ToString()?? string.Empty);
             }
-            if (((String)requests[0, 8]).ToLower()=="all")
+            if ((requests[0, 8].ToString()?? string.Empty).ToLower()=="all")
             {
                 memberrequest="-1";
             }
             else
             {
-                memberrequest=(String)requests[0, 8];
+                memberrequest=(requests[0, 8].ToString()?? string.Empty);
             }
             List<int> lclist = stiffnessmatcalcs.lcmemberstringread(lcrequest, lchash.Max(),lchash.ToList());
             List<object[]> outlist;
@@ -2732,6 +2809,45 @@ namespace TESTEXDNA
                 }
             }
             return outarray;
+        }
+        public static object[,] graphrangeset(object[,] nodes, object[,] effects)
+        {
+            double xmax=-99999;
+            double xmin=99999;
+            double ymax=-99999;
+            double ymin=99999;
+            for (int i = 0; i < nodes.GetLength(0);i++)
+            {
+                if(!(nodes[i,0] is ExcelError))
+                {
+                    xmax=Math.Max((double)nodes[i,0],xmax);
+                    xmin=Math.Min((double)nodes[i,0],xmin);
+                    ymax=Math.Max((double)nodes[i,1],ymax);
+                    ymin=Math.Min((double)nodes[i,1],ymin);
+                }
+                    
+            }
+            for (int i = 0; i < effects.GetLength(0);i++)
+            {
+                if(!(effects[i,0] is ExcelError))
+                {
+                    xmax=Math.Max((double)effects[i,0],xmax);
+                    xmin=Math.Min((double)effects[i,0],xmin);
+                    ymax=Math.Max((double)effects[i,1],ymax);
+                    ymin=Math.Min((double)effects[i,1],ymin);
+                }
+                    
+            }
+            double absrange=Math.Max(xmax-xmin,ymax-ymin);
+            if ((xmax - xmin) == absrange)
+            {
+                return new object[,] {{xmin,ymin/2+ymax/2-absrange/2},{ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA},{xmin+absrange,ymin/2+ymax/2+absrange/2}};
+            }
+            else
+            {
+                return new object[,] {{xmin/2+xmax/2-absrange/2,ymin},{ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA},{xmin/2+xmax/2+absrange/2,ymin+absrange}};
+            }
+            
         }
     }
     class parseclass

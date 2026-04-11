@@ -139,15 +139,16 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         offs=offs+4;
         xlApp.workbooks[wb].worksheets[ws].range[cell].resize[20,10].Columns.Autofit();
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].formula2 = "=structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address + ")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].resize(5,6).HorizontalAlignment=5;
         string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].address();
         offs=offs+5;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,7].value="Results Table";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].resize[1,7].Columns.Autofit();
-        double lft = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].left;
-        double top = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].top;
-        double rght =xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,6].left;
-        ChartObject chartob = xlApp.workbooks[wb].worksheets[ws].ChartObjects.Add(lft, top, rght-lft, (rght-lft)*0.7);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,6].value="Results Table";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,6].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,6].resize[1,7].Columns.Autofit();
+        double lft = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5].left;
+        double top = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5].top;
+        double rght =xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5,6].left;
+        ChartObject chartob = xlApp.workbooks[wb].worksheets[ws].ChartObjects.Add(lft, top, rght-lft, 0.9*(rght-lft));
         Chart chrt = chartob.Chart;
         chrt.PlotVisibleOnly = false;
         chrt.HasTitle = true;
@@ -179,9 +180,9 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         elementseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
         elementseries.Format.Line.Visible = MsoTriState.msoTrue;
         elementseries.Format.Line.Weight=3;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].formula2 = "=structuralanalysiselementcoords(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address +")";
-        elementseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].resize[500, 1].address];
-        elementseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 3].resize[500, 1].address];
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4,2].formula2 = "=structuralanalysiselementcoords(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address +")";
+        elementseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4,2].resize[500, 1].address];
+        elementseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4, 3].resize[500, 1].address];
 
         hlder.NewSeries();
         Series effectseries = chrt.SeriesCollection(3);
@@ -195,10 +196,27 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].resize[1,7].Columns.Autofit();
         effectseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 4].resize[2000, 1].address];
         effectseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 5].resize[2000, 1].address];
+
+        hlder.NewSeries();
+        Series rangeseries = chrt.SeriesCollection(4);
+        rangeseries.Type = -4169;
+        rangeseries.Name = "";
+        rangeseries.Smooth = false;
+        rangeseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
+        rangeseries.Format.Line.Visible = MsoTriState.msoTrue;;
+        rangeseries.Format.Line.Weight=0;
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].formula2 = "=structuralanalysisgraphrange("+ xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1].address+"#,"+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].address+"#)";
+        rangeseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 2].resize[3, 1].address];
+        rangeseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 3].resize[3, 1].address];
+        chrt.Legend.LegendEntries(4).delete();
+
         chrt.Axes(1).HasTitle = true;
         chrt.Axes(1).AxisTitle.Text = "x (m)";
         chrt.Axes(2).HasTitle = true;
         chrt.Axes(2).AxisTitle.Text = "y (m)";
+        double dummy = chrt.PlotArea.Width; 
+        chrt.PlotArea.Width = 0.8*(rght-lft);
+        chrt.PlotArea.Height = 0.8*(rght-lft);
       }
 
       

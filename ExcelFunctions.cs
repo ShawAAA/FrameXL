@@ -141,6 +141,17 @@
         {
             return parseclass.parseloadequations(lc[0,0],index[0,0],x[0,0],y[0,0],zz[0,0],eqns[0,0]);
         }
+        [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =false,Description = "graph range control")]
+        public static object[,] Structuralanalysisgraphrange(
+            [ExcelArgument(Name = "nodes")]
+            object[,] nodes,
+            [ExcelArgument(Name = "effects")]
+            object[,] effects)
+
+        {
+            return graphingtablefunctions.graphrangeset(nodes,effects);
+        }
+
         
         
     }
