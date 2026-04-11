@@ -702,7 +702,7 @@ namespace TESTEXDNA
                     outlist.Add(holder[i]);
                 }
             }
-
+            outlist.Sort();
             return outlist;
         }
         public static List<int> lcmemberfragment(string txt,int cap)
@@ -1133,7 +1133,7 @@ namespace TESTEXDNA
     {
         public static double[,] bendingloads(double[] bloadsrow,double[] beamgeomrow, double projectionscalar,double bendfraction)
         {
-            double[,] outp= new double[1,13];
+            double[,] outp= new double[1,14];
             outp[0,0]=bloadsrow[2];
             outp[0,1]=1;
             outp[0,2]=beamgeomrow[0];
@@ -1171,11 +1171,12 @@ namespace TESTEXDNA
                 outp[0,12]=-Lw*(s3*wm+s4*wd)/(120*L*L);
 
             }
+            outp[0,13]=bloadsrow[9];
             return outp;
         }
         public static double[,] bendingmomentloads(double[] bloadsrow,double[] beamgeomrow)
         {
-            double[,] outp= new double[1,13];
+            double[,] outp= new double[1,14];
             outp[0,0]=bloadsrow[2];
             outp[0,1]=2;
             outp[0,2]=beamgeomrow[0];
@@ -1208,11 +1209,12 @@ namespace TESTEXDNA
                 outp[0,11]=v0;
                 outp[0,12]=-(v0 * a + c1+ (v0 - ma) * (b - a)- k/2 * Math.Pow(b - a,2)+ v0 * (L - b));
             }
+            outp[0,13]=bloadsrow[9];
             return outp;
         }
         public static double[,] axialloads(double[] bloadsrow,double[] beamgeomrow, double projectionscalar,double axfraction)
         {
-           double[,] outp= new double[1,13];
+           double[,] outp= new double[1,14];
             outp[0,0]=bloadsrow[2];
             outp[0,1]=0;
             outp[0,2]=beamgeomrow[0];
@@ -1240,6 +1242,7 @@ namespace TESTEXDNA
                 outp[0,7]=Lt-(b*b*wa/2+k*b*b*b/3-k*b*b*a/2-a*a*wa/2+k*a*a*a/6)/L;
                 outp[0,10]=(b*b*wa/2+k*b*b*b/3-k*b*b*a/2-a*a*wa/2+k*a*a*a/6)/L;
             }
+            outp[0,13]=bloadsrow[9];
             return outp;
         }
     }
@@ -1779,7 +1782,7 @@ namespace TESTEXDNA
                 memberlist = stiffnessmatcalcs.lcmemberstringread(memberstring, tnodes.GetLength(0),inlist);
                 foreach(int member in memberlist)
                 {
-                    temparray=new double[4];
+                    temparray=new double[5];
                     temparray[0]=(double)inarray[i,0];
                     temparray[1]=(double)member;
                     switch (inarray[i, 2])
@@ -1802,18 +1805,19 @@ namespace TESTEXDNA
                     {
                         temparray[3]=(double)inarray[i,3];
                     }
+                    temparray[4]=i+1;
                     outlist.Add(temparray);
                 }
                 
             }
-            double[,] outarray=new double[outlist.Count,inarray.GetLength(1)];
+            double[,] outarray=new double[outlist.Count,inarray.GetLength(1)+1];
             for (int i = 0; i < outlist.Count; i++)
             {
                 if (outlist[i][1]>tnodes.GetLength(0) || outlist[i][1] < 1)
                 {
                     throw new ArgumentNullException("Provided node index is out of range");
                 }
-                for (int j = 0; j < inarray.GetLength(1); j++)
+                for (int j = 0; j < inarray.GetLength(1)+1; j++)
                 {
                     outarray[i,j]=outlist[i][j];
                 }
@@ -1851,7 +1855,7 @@ namespace TESTEXDNA
                 memberlist = stiffnessmatcalcs.lcmemberstringread(memberstring, telements.GetLength(0),inlist);
                 foreach(int member in memberlist)
                 {
-                    temparray=new double[9];
+                    temparray=new double[10];
                     temparray[0]=(double)inarray[i,0];
                     temparray[1]=member;
                     if ((String)inarray[i,2]=="Point Load")
@@ -1955,18 +1959,19 @@ namespace TESTEXDNA
                         temparray[7]=0;
                         temparray[8]=0;
                     }
+                    temparray[9]=i+1;
                     outlist.Add(temparray);
                 }
                 
             }
-            double[,] outarray=new double[outlist.Count,inarray.GetLength(1)];
+            double[,] outarray=new double[outlist.Count,inarray.GetLength(1)+1];
             for (int i = 0; i < outlist.Count; i++)
             {
                 if (outlist[i][1]>telements.GetLength(0) || outlist[i][1] < 1)
                 {
                     throw new ArgumentNullException("Provided node index is out of range");
                 }
-                for (int j = 0; j < inarray.GetLength(1); j++)
+                for (int j = 0; j < inarray.GetLength(1)+1; j++)
                 {
                     outarray[i,j]=outlist[i][j];
                 }
@@ -2175,7 +2180,7 @@ namespace TESTEXDNA
            return outarray;
         }
 
-        public static object[,] grapheffects(object[,] nodes,object[,] elements,object[,] results,object[,] requests)
+        public static object[,] grapheffects(object[,] nodes,object[,] elements,object[,] results,object[,] requests,object[,] loads, object[,] bloads)
         {
             requests[0,5]=requests[0,1];
             requests[0,6]=requests[0,2];
@@ -2213,7 +2218,7 @@ namespace TESTEXDNA
             double graphrange=Math.Sqrt(Math.Pow(xmax-xmin,2)+Math.Pow(ymax-ymin,2))/2;
             int actionsdisplacements;
             int nodeselements;
-            object[,] tabholder=tabularise(results,requests);
+            object[,] tabholder=tabularise(results,requests,nodes,elements,loads,bloads);
             if ((String)requests[0, 5] == "Actions")
             {
                 actionsdisplacements=0;
@@ -2424,7 +2429,7 @@ namespace TESTEXDNA
             }
             return outarray;
         }
-        public static object[,] tabularise(object[,] results,object[,] requests)
+        public static object[,] tabularise(object[,] results,object[,] requests,object[,] nodes,object[,] elements, object[,] loads, object[,] bloads)
         {
             int actionsdisplacements;
             int nodeselements;
@@ -2434,9 +2439,13 @@ namespace TESTEXDNA
             {
                 actionsdisplacements=0;
             }
-            else
+            else if ((String)requests[0, 5] == "Displacements")
             {
                 actionsdisplacements=1;
+            }
+            else
+            {
+                return graphingtablefunctions.tabulariseloads(requests,nodes,elements,loads,bloads);
             }
             if ((String)requests[0, 6] == "Nodes")
             {
@@ -2573,6 +2582,156 @@ namespace TESTEXDNA
                 }
             }
             return outlist;
+        }
+        public static object[,] tabulariseloads(object[,] requests, object[,] nodes, object[,] elements,object[,] loads, object[,] bloads )
+        {
+            double[,] tnodes=interfacefunctions.nodefilter(interfacefunctions.filterarrayempties(nodes));
+            double[,] telements=interfacefunctions.elementfilter(interfacefunctions.filterarrayempties(elements));  
+            double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements,tnodes);
+            double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
+            HashSet<int> lchash=stiffnessmatcalcs.LClist(tnloads,tbloads);
+            HashSet<int> memberhash= new HashSet<int>();
+            string lcrequest;
+            string memberrequest;
+            if (((String)requests[0, 7]).ToLower()=="all")
+            {
+                lcrequest="-1";
+            }
+            else
+            {
+                lcrequest=(String)requests[0, 7];
+            }
+            if (((String)requests[0, 8]).ToLower()=="all")
+            {
+                memberrequest="-1";
+            }
+            else
+            {
+                memberrequest=(String)requests[0, 8];
+            }
+            List<int> lclist = stiffnessmatcalcs.lcmemberstringread(lcrequest, lchash.Max(),lchash.ToList());
+            List<object[]> outlist;
+            
+            if ((String)requests[0, 6] == "Nodes")
+            {
+                for (int i=0; i < tnodes.GetLength(0); i++)
+                {
+                    memberhash.Add(i+1);
+                }
+                Dictionary<int,Dictionary<int,List<int>>> nloadsholder=stiffnessmatcalcs.nodeloadsholder(tnloads);
+                List<int> memberlist = stiffnessmatcalcs.lcmemberstringread(memberrequest, tnodes.GetLength(0),memberhash.ToList());
+                object[] temparray;
+                outlist= new List<object[]>();
+                outlist.Add(new object[] {"Load Case", "Node Index","Load Index","x Force (N)","y Force (N)","zz Moment (Nm)"});
+                foreach (int lc in lclist)
+                {
+                    if (nloadsholder.ContainsKey(lc))
+                    {
+                        foreach (int member in memberlist)
+                        {
+                            if (nloadsholder[lc].ContainsKey(member))
+                            {
+                                for (int ldindex=0;ldindex<nloadsholder[lc][member].Count;ldindex++)
+                                {
+                                    if (tnloads[nloadsholder[lc][member][ldindex], 2] == 0)
+                                    {
+                                        temparray=new object[] {lc,member,tnloads[nloadsholder[lc][member][ldindex], 4],tnloads[nloadsholder[lc][member][ldindex], 3],0,0};
+                                    }
+                                    else if (tnloads[nloadsholder[lc][member][ldindex], 2] == 1)
+                                    {
+                                        temparray=new object[] {lc,member,tnloads[nloadsholder[lc][member][ldindex], 4],0,tnloads[nloadsholder[lc][member][ldindex], 3],0};
+                                    }
+                                    else
+                                    {
+                                        temparray=new object[] {lc,member,tnloads[nloadsholder[lc][member][ldindex], 4],0,0,tnloads[nloadsholder[lc][member][ldindex], 3]};
+                                    }
+                                    outlist.Add(temparray);
+                                }
+                                    
+                            }
+                    
+                        }
+                
+                    }
+                }
+            }
+            else
+            {
+                for (int i=0; i < telements.GetLength(0); i++)
+                {
+                    memberhash.Add(i+1);
+                }
+                double[,] beamgeom=stiffnessmatcalcs.beamgeom(tnodes,telements);
+                Dictionary<int,Dictionary<int,List<double[,]>>> bloadsholder=stiffnessmatcalcs.beamloadsholder(tbloads,beamgeom);
+                List<int> memberlist = stiffnessmatcalcs.lcmemberstringread(memberrequest, telements.GetLength(0),memberhash.ToList());
+                object[] temparray;
+                outlist= new List<object[]>();
+                outlist.Add(new object[] {"Load Case", "Element Index","Load Index","Point/Patch","Direction (local)","Point Load Position, LHS of Patch (%)","Point Magntiude (N), LHS Patch Magnitude (N/m)","RHS of Patch (%)","RHS Patch Magnitude (N/m)"});
+                double[,] ldblock;
+                string ptpatch;
+                string dirn;
+                foreach (int lc in lclist)
+                {
+                    if (bloadsholder.ContainsKey(lc))
+                    {
+                        foreach (int member in memberlist)
+                        {
+                            if (bloadsholder[lc].ContainsKey(member))
+                            {
+                                for (int ldindex=0;ldindex<bloadsholder[lc][member].Count;ldindex++)
+                                {
+                                    for (int rw=0;rw<bloadsholder[lc][member][ldindex].GetLength(0);rw++)
+                                    {
+                                        ldblock=bloadsholder[lc][member][ldindex];
+                                        if (ldblock[rw, 0] == 0)
+                                        {
+                                            ptpatch="Point";
+                                        }
+                                        else
+                                        {
+                                            ptpatch="Patch";
+                                        }
+                                         if (ldblock[rw, 1] == 0)
+                                        {
+                                            dirn="x";
+                                        }
+                                        else if (ldblock[rw, 1] == 1)
+                                        {
+                                            dirn="y";
+                                        }
+                                        else
+                                        {
+                                            dirn="zz";
+                                        }
+                                        if (ldblock[rw, 0] == 0)
+                                        {
+                                            temparray=new object[] {lc,member,ldblock[rw,13],ptpatch,dirn,ldblock[rw,3],ldblock[rw,4],"",""};
+                                        }
+                                        else
+                                        {
+                                            temparray=new object[] {lc,member,ldblock[rw,13],ptpatch,dirn,ldblock[rw,3],ldblock[rw,4],ldblock[rw,5],ldblock[rw,6]};
+                                        }
+                                        outlist.Add(temparray);
+                                    }
+                                    
+                                }
+                                    
+                            }
+                    
+                        }
+                
+                    }
+                }
+            }
+            object[,] outarray=new object[outlist.Count,outlist[0].GetLength(0)];
+            for (int i = 0; i < outarray.GetLength(0);i++)
+            {
+                for (int j=0; j < outarray.GetLength(1); j++)
+                {
+                    outarray[i,j]=outlist[i][j];
+                }
+            }
+            return outarray;
         }
     }
     class parseclass

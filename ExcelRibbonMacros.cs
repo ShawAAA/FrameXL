@@ -130,10 +130,10 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].addcomment("Scale factor for displacements, arbitrary graphing factor for actions");
         cmt.Shape.TextFrame.Characters().Font.Bold = false;
         cmt.Shape.TextFrame.AutoSize = true;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Actions,Displacements", 0);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Actions,Displacements,Loads", 0);
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 2].validation.add(3, 3, 3, "Nodes,Elements", 0);
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 3].validation.add(3, 3, 3, "x,y,zz", 0);
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 5].validation.add(3, 3, 3, "Actions,Displacements", 0);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 5].validation.add(3, 3, 3, "Actions,Displacements,Loads", 0);
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 6].validation.add(3, 3, 3, "Nodes,Elements", 0);
         string requestsaddress=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 0].address;
         offs=offs+4;
@@ -142,7 +142,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].address();
         offs=offs+5;
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,7].value="Results Table";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].resize[1,7].Columns.Autofit();
         double lft = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].left;
         double top = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].top;
@@ -191,7 +191,8 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         effectseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
         effectseries.Format.Line.Visible = MsoTriState.msoTrue;;
         effectseries.Format.Line.Weight=2;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].formula2 = "=structuralanalysisgrapheffects(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+"," +resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address +")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].formula2 = "=structuralanalysisgrapheffects(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+"," +resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+ ","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].resize[1,7].Columns.Autofit();
         effectseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 4].resize[2000, 1].address];
         effectseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 5].resize[2000, 1].address];
         chrt.Axes(1).HasTitle = true;

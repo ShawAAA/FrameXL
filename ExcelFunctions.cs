@@ -92,10 +92,18 @@
             [ExcelArgument(Name = "Results")]
             object[,] results,
             [ExcelArgument(Name = "Requested")]
-            object[,] requests)
+            object[,] requests,
+            [ExcelArgument(Name = "Nodes")]
+            object[,] nodes,
+            [ExcelArgument(Name = "Elements")]
+            object[,] elements,
+            [ExcelArgument(Name = "Nodes Loads")]
+            object[,] loads,
+            [ExcelArgument(Name = "Beam Loads")]
+            object[,] bloads)
 
         {
-            return graphingtablefunctions.tabularise(results,requests);
+            return graphingtablefunctions.tabularise(results,requests,nodes,elements,loads,bloads);
         }
         [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =true,Description = "Structural Analysis-graph effects")]
         public static object[,] Structuralanalysisgrapheffects(
@@ -106,10 +114,14 @@
             [ExcelArgument(Name = "Results")]
             object[,] results,
             [ExcelArgument(Name = "Requested")]
-            object[,] requests)
+            object[,] requests,
+            [ExcelArgument(Name = "Nodes Loads")]
+            object[,] loads,
+            [ExcelArgument(Name = "Beam Loads")]
+            object[,] bloads)
 
         {
-            return graphingtablefunctions.grapheffects(interfacefunctions.filterarrayempties(nodes),interfacefunctions.filterarrayempties(Elements),results,requests);
+            return graphingtablefunctions.grapheffects(interfacefunctions.filterarrayempties(nodes),interfacefunctions.filterarrayempties(Elements),results,requests,loads,bloads);
         }
         [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =false,Description = "dbg")]
         public static double Structuralanalysisdbg(
