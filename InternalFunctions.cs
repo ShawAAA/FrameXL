@@ -1162,7 +1162,7 @@ namespace TESTEXDNA
                 double s1=10*((L*L+a*a)*(L+a)-(a*a+b*b)*(a-b)-L*b*(L+b)-a*a*a);
                 double s2=Lw*(L*(2*L+a+b)-3*Math.Pow(a-b,2)-2*a*b);
                 double s3=120*a*b*(a+Lw)+10*Lw*(6*a*a+4*L*Lw-3*Lw*Lw);
-                double s4=10*L*Lw-10*Lw*a*(L-3*b)-9*Lw*Lw*Lw;
+                double s4=10*L*Lw*Lw-10*Lw*a*(L-3*b)-9*Lw*Lw*Lw;
                 double wm=wa/2+wb/2;
                 double wd=wb-wa;
                 outp[0,8]=Lw*wm-Lw*(s1*wm+s2*wd)/(20*Math.Pow(L,3));
@@ -1387,7 +1387,7 @@ namespace TESTEXDNA
                     double s1=10*((L*L+a*a)*(L+a)-(a*a+b*b)*(a-b)-L*b*(L+b)-a*a*a);
                     double s2=Lw*(L*(2*L+a+b)-3*Math.Pow(a-b,2)-2*a*b);
                     double s3=120*a*b*(a+Lw)+10*Lw*(6*a*a+4*L*Lw-3*Lw*Lw);
-                    double s4=10*L*Lw-10*Lw*a*(L-3*b)-9*Lw*Lw*Lw;
+                    double s4=10*L*Lw*Lw-10*Lw*a*(L-3*b)-9*Lw*Lw*Lw;
                     double wm=wa/2+wb/2;
                     double wd=wb-wa;
                     double Ra=-(Lw*wm-Lw*(s1*wm+s2*wd)/(20*Math.Pow(L,3)));
@@ -2258,7 +2258,7 @@ namespace TESTEXDNA
                     outholder=graphingtablefunctions.graphnodeloads(nodes, tabholder,scale,graphrange);
                     break;
                 case 5:
-
+                    outholder=graphingtablefunctions.graphelementloads(nodes,elements, tabholder,dirnindex,scale,graphrange); 
                     break;
             }
             return outholder;
@@ -2412,9 +2412,9 @@ namespace TESTEXDNA
             double effectmag;
             double netscale;
             double chapercent;
-            for (int i = 0; i < nodes.GetLength(0); i++)
+            for (int i = 1; i < tabularised.GetLength(0); i++)
             {
-                maxmag=Math.Max(Math.Abs((double)tabularised[1+i,4+dirnindex]),maxmag);
+                maxmag=Math.Max(Math.Abs((double)tabularised[i,4+dirnindex]),maxmag);
             }
             if (maxmag == 0)
             {
@@ -2497,6 +2497,185 @@ namespace TESTEXDNA
                     }
                 }
                 outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+            }
+            object[,] outarray= new object[outholder.Count(), 2];
+            for (int i=0; i<outholder.Count();i++)
+            {
+                outarray[i,0]=outholder[i][0];
+                outarray[i,1]=outholder[i][1];
+            }
+            return outarray;
+        }
+        public static object[,] graphelementloads(object[,] nodes, object[,] elements,object[,] tabularised,int dirnindex,double scale,double graphrange)
+        {
+            List<object[]> outholder= new List<object[]>();
+            double maxmagpatch=0;
+            double maxmagpoint=0;
+            double elementx1;
+            double elementx2;
+            double elementy1;
+            double elementy2;
+            double xvec;
+            double yvec;
+            double magn;
+            double effectmag;
+            double netscalepoint;
+            double netscalepatch;
+            double chapercent;
+            List<double[]> patchlist= new List<double[]>();
+            List<double[]> pointlist= new List<double[]>();
+            List<double[]> templist;
+            double loadval;
+            List<double> loadvals;
+            SortedSet<double> tempset;
+            SortedSet<int> elementlist= new SortedSet<int>();
+            for (int i = 1; i < tabularised.GetLength(0); i++)
+            {
+                elementlist.Add((int)tabularised[i,1]);
+            }
+            Dictionary<int,List<double[]>> pointdict= new Dictionary<int,List<double[]>>();
+            Dictionary<int,List<double[]>> patchdict= new Dictionary<int,List<double[]>>();
+            Dictionary<int,SortedSet<double>> patchdict2= new Dictionary<int,SortedSet<double>>();
+            Dictionary<int,List<double>> patchdict3= new Dictionary<int,List<double>>();
+            string dirnstring;
+            if (dirnindex == 0)
+            {
+                dirnstring="x";
+            }
+            else if (dirnindex == 1)
+            {
+                dirnstring="y";
+            }
+            else
+            {
+                dirnstring="zz";
+            }
+            for (int i = 1; i < tabularised.GetLength(0); i++)
+            {
+                if ((String)tabularised[i, 4] == dirnstring)
+                {
+                    if ((String)tabularised[i, 3] == "Point")
+                    {
+                        pointlist.Add(new double[] {Convert.ToDouble(tabularised[i,1]),Convert.ToDouble(tabularised[i,5]),Convert.ToDouble(tabularised[i,6])});
+                    }
+                    else
+                    {
+                        patchlist.Add(new double[] {Convert.ToDouble(tabularised[i,1]),Convert.ToDouble(tabularised[i,5]),Convert.ToDouble(tabularised[i,6]),Convert.ToDouble(tabularised[i,7]),Convert.ToDouble(tabularised[i,8])});
+                    }
+                }
+                
+            }
+            for (int i = 0; i < pointlist.Count-1; i++)
+            {
+                for (int j = pointlist.Count-1; j >0; j--)
+                {
+                    if (pointlist[i][0] == pointlist[j][0] &&pointlist[i][1] == pointlist[j][1])
+                    {
+                        pointlist[i][2]=  pointlist[i][2]+ pointlist[j][2];
+                        pointlist.RemoveAt(j);
+                    }
+                }
+            }
+            for (int i = 0; i < pointlist.Count; i++)
+            {
+                if (pointdict.ContainsKey((int)pointlist[i][0]))
+                {
+                    templist=pointdict[(int)pointlist[i][0]];
+                    templist.Add(pointlist[i]);
+                    pointdict[(int)pointlist[i][0]]=templist;
+                }
+                else
+                {
+                    pointdict.Add((int)pointlist[i][0],new List<double[]> {pointlist[i]});
+                }
+            }
+            for (int i = 0; i < patchlist.Count; i++)
+            {
+                if (patchdict.ContainsKey((int)patchlist[i][0]))
+                {
+                    templist=patchdict[(int)patchlist[i][0]];
+                    templist.Add(patchlist[i]);
+                    patchdict[(int)patchlist[i][0]]=templist;
+                    tempset=patchdict2[(int)patchlist[i][0]];
+                    tempset.Add(Math.Max(patchlist[i][1]-0.00001,0));
+                    tempset.Add(patchlist[i][1]);
+                    tempset.Add(patchlist[i][3]);
+                    tempset.Add(Math.Min(patchlist[i][3]+0.00001,1));
+                    patchdict2[(int)patchlist[i][0]]=tempset;
+                }
+                else
+                {
+                    patchdict.Add((int)patchlist[i][0],new List<double[]> {patchlist[i]});
+                    patchdict2.Add((int)patchlist[i][0],new SortedSet<double> {0,Math.Max(patchlist[i][1]-0.00001,0),patchlist[i][1],patchlist[i][3],Math.Min(patchlist[i][3]+0.00001,1),1});
+                }
+            }
+            foreach(int el in patchdict.Keys)
+            {
+                tempset=patchdict2[el];
+                templist=patchdict[el];
+                loadvals=new List<double>();
+                for (int i = 0; i < tempset.Count; i++)
+                {
+                    loadval=0;
+                    for (int j = 0; j < templist.Count; j++)
+                    {
+                        if (!(tempset.ElementAt(i) < templist[j][1] || tempset.ElementAt(i) > templist[j][3]))
+                        {
+                            loadval=loadval+templist[j][2]+(templist[j][4]-templist[j][2])*(tempset.ElementAt(i)-templist[j][1])/(templist[j][3]-templist[j][1]);
+                        }
+                    }
+                    loadvals.Add(loadval);
+                    maxmagpatch=Math.Max(Math.Abs(loadval),maxmagpatch);
+                }
+                patchdict3.Add(el,loadvals);
+            }
+
+            for (int i = 0; i < pointlist.Count; i++)
+            {
+                maxmagpoint=Math.Max(Math.Abs(pointlist[i][2]),maxmagpoint);
+            }
+            if (maxmagpoint == 0)
+            {
+                maxmagpoint=1;
+            }
+            if (maxmagpatch == 0)
+            {
+                maxmagpatch=1;
+            }
+
+            netscalepoint=scale/100*graphrange/maxmagpoint/2;
+            netscalepatch=scale/100*graphrange/maxmagpatch/2;
+            foreach (int el in elementlist)
+            {
+                elementx1=(double)nodes[(int)((double)elements[el-1,0]-1),0];
+                elementy1=(double)nodes[(int)((double)elements[el-1,0]-1),1];
+                elementx2=(double)nodes[(int)((double)elements[el-1,1]-1),0];
+                elementy2=(double)nodes[(int)((double)elements[el-1,1]-1),1];
+                magn=Math.Sqrt(Math.Pow(elementx2-elementx1,2)+Math.Pow(elementy2-elementy1,2));
+                xvec=(elementx2-elementx1)/magn;
+                yvec=(elementy2-elementy1)/magn;
+                if (patchdict3.ContainsKey(el))
+                {
+                    outholder.Add(new object[] {elementx1,elementy1});
+                    for (int lvindex=0;lvindex<patchdict3[el].Count;lvindex++)
+                    {
+                        effectmag=patchdict3[el][lvindex];
+                        chapercent=patchdict2[el].ElementAt(lvindex);
+                        outholder.Add(new object[] {elementx1+xvec*magn*chapercent-yvec*netscalepatch*effectmag,elementy1+yvec*magn*chapercent+xvec*netscalepatch*effectmag});
+                    }
+                    outholder.Add(new object[] {elementx2,elementy2});
+                    outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                }
+                if (pointdict.ContainsKey(el))
+                {
+                    for (int i = 0; i < pointdict[el].Count; i++)
+                    {
+                        outholder.Add(new object[] {elementx1+xvec*magn*pointdict[el][i][1],elementy1+yvec*magn*pointdict[el][i][1]});
+                        outholder.Add(new object[] {elementx1+xvec*magn*pointdict[el][i][1]-yvec*netscalepoint*pointdict[el][i][2],elementy1+yvec*magn*pointdict[el][i][1]+xvec*netscalepoint*pointdict[el][i][2]});
+                        outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                    }
+                    
+                }
             }
             object[,] outarray= new object[outholder.Count(), 2];
             for (int i=0; i<outholder.Count();i++)
@@ -2743,7 +2922,7 @@ namespace TESTEXDNA
                 List<int> memberlist = stiffnessmatcalcs.lcmemberstringread(memberrequest, telements.GetLength(0),memberhash.ToList());
                 object[] temparray;
                 outlist= new List<object[]>();
-                outlist.Add(new object[] {"Load Case", "Element Index","Load Index","Point/Patch","Direction (local)","Point Load Position, LHS of Patch (%)","Point Magntiude (N), LHS Patch Magnitude (N/m)","RHS of Patch (%)","RHS Patch Magnitude (N/m)"});
+                outlist.Add(new object[] {"Load Case", "Element Index","Load Index","Point/Patch","Direction (local)","Point Load Position, LHS of Patch (%)","Point Magnitude (N), LHS Patch Magnitude (N/m)","RHS of Patch (%)","RHS Patch Magnitude (N/m)"});
                 double[,] ldblock;
                 string ptpatch;
                 string dirn;

@@ -153,7 +153,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         chrt.PlotVisibleOnly = false;
         chrt.HasTitle = true;
 
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].formula2="=\"LC\" & "+requestsaddress + "& \", \" & " + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"=\"Actions\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].formula2="=\"LC\" & "+requestsaddress + "& \", \" & " + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"<>\"Displacements\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,4].formula2="=" + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"=\"Actions\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
        
         chrt.ChartTitle.Text = "='"+ws+"'!" +xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].address;
