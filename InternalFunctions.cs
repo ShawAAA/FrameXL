@@ -2278,11 +2278,11 @@ namespace TESTEXDNA
                 maxmagforce=Math.Max(Math.Max(Math.Abs((double)tabularised[1+i,2]),Math.Abs((double)tabularised[1+i,3])),maxmagforce);
                 maxmagmoment=Math.Max(Math.Abs((double)tabularised[1+i,4]),maxmagmoment);
             }
-            if (maxmagforce == 0)
+            if (maxmagforce < Math.Pow(10,-10))
             {
                 maxmagforce=1;
             }
-            if (maxmagmoment == 0)
+            if (maxmagmoment < Math.Pow(10,-10))
             {
                 maxmagmoment=1;
             }
@@ -2366,11 +2366,11 @@ namespace TESTEXDNA
                 maxmagforce=Math.Max(Math.Max(Math.Abs(tablist[i][1]),Math.Abs(tablist[i][2])),maxmagforce);
                 maxmagmoment=Math.Max(Math.Abs(tablist[i][3]),maxmagmoment);
             }
-            if (maxmagforce == 0)
+            if (maxmagforce < Math.Pow(10,-10))
             {
                 maxmagforce=1;
             }
-            if (maxmagmoment == 0)
+            if (maxmagmoment < Math.Pow(10,-10))
             {
                 maxmagmoment=1;
             }
