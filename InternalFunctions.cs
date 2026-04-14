@@ -961,7 +961,7 @@ namespace TESTEXDNA
                             }
                             tempstring=tempstring+string.Format("{0:G4}",moveholder)+",";
                         }
-                        tempstring=tempstring.Substring(0,tempstring.Length-1)+"+";
+                        tempstring=tempstring.Substring(0,tempstring.Length-1)+"^";
                     }
                     outstring+=tempstring;
                     outstring=outstring.Substring(0,outstring.Length-1)+";";
@@ -1041,7 +1041,7 @@ namespace TESTEXDNA
                             }
                             tempstring=tempstring+string.Format("{0:G4}",moveholder)+",";
                         }
-                        tempstring=tempstring.Substring(0,tempstring.Length-1)+"+";
+                        tempstring=tempstring.Substring(0,tempstring.Length-1)+"^";
                     }
                     outstring+=tempstring;
                     outstring=outstring.Substring(0,outstring.Length-1)+";";
@@ -2278,11 +2278,11 @@ namespace TESTEXDNA
                 maxmagforce=Math.Max(Math.Max(Math.Abs((double)tabularised[1+i,2]),Math.Abs((double)tabularised[1+i,3])),maxmagforce);
                 maxmagmoment=Math.Max(Math.Abs((double)tabularised[1+i,4]),maxmagmoment);
             }
-            if (maxmagforce < Math.Pow(10,-10))
+            if (maxmagforce < Math.Pow(10,-5))
             {
                 maxmagforce=1;
             }
-            if (maxmagmoment < Math.Pow(10,-10))
+            if (maxmagmoment < Math.Pow(10,-5))
             {
                 maxmagmoment=1;
             }
@@ -2366,11 +2366,11 @@ namespace TESTEXDNA
                 maxmagforce=Math.Max(Math.Max(Math.Abs(tablist[i][1]),Math.Abs(tablist[i][2])),maxmagforce);
                 maxmagmoment=Math.Max(Math.Abs(tablist[i][3]),maxmagmoment);
             }
-            if (maxmagforce < Math.Pow(10,-10))
+            if (maxmagforce < Math.Pow(10,-5))
             {
                 maxmagforce=1;
             }
-            if (maxmagmoment < Math.Pow(10,-10))
+            if (maxmagmoment < Math.Pow(10,-5))
             {
                 maxmagmoment=1;
             }
@@ -2827,7 +2827,7 @@ namespace TESTEXDNA
             List<object[]> outlist= new List<object[]>();
             for (int i = 0; i < lcmemberstext.Count; i++)
             {
-                txtsplittemp=((String)lcmemberstext[i][2]).Split("+");
+                txtsplittemp=((String)lcmemberstext[i][2]).Split("^");
                 for (int j = 0; j < txtsplittemp.Count(); j++)
                 {
                     txtsplittemp2=(txtsplittemp[j]).Split("#");
