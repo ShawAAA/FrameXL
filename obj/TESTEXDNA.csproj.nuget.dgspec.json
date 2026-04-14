@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj": {}
+    "c:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj": {
+    "c:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj",
+        "projectUniqueName": "c:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj",
         "projectName": "TESTEXDNA",
-        "projectPath": "C:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj",
+        "projectPath": "c:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\TESTEXDNA.csproj",
         "packagesPath": "C:\\Users\\Nebula PC\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\obj\\",
+        "outputPath": "c:\\Users\\Nebula PC\\OneDrive\\Documents\\EXDNA-BLANK\\EXDNA-BLANK\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

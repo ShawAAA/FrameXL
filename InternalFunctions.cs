@@ -949,6 +949,7 @@ namespace TESTEXDNA
                         bloads=new List<double[,]>();
                     }
                     effectmatrix=stiffnessmatcalcs.beamdispcalc(bloads,cha,axialforce,axialtrans,bendingtransforce,bendingmoment,rotation,bendingtrans,beamgeom[elementlist[j]-1,4],beamgeom[elementlist[j]-1,5],beamgeom[elementlist[j]-1,0]);
+                    effectmatrix=stiffnessmatcalcs.linearise(effectmatrix,cha);
                     for (int k = 0; k < effectmatrix.RowCount; k++)
                     {
                         tempstring=tempstring+string.Format("{0:G4}", cha.ElementAt(k))+"|"+string.Format("{0:G4}", cha.ElementAt(k)*L)+"#";
@@ -1021,6 +1022,7 @@ namespace TESTEXDNA
                         cha=new SortedSet<double> {0,1};
                         effectmatrix=Matrix<double>.Build.DenseOfArray(new double[,] {{-axial,bending,-rotation},{-axial,bending,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]}});
                     }
+                    effectmatrix=stiffnessmatcalcs.linearise(effectmatrix,cha);
                     for (int k = 0; k < effectmatrix.RowCount; k++)
                     {
                         if (cha.ElementAt(k) < 0.0001)
@@ -1051,6 +1053,37 @@ namespace TESTEXDNA
             outstring=outstring.Substring(0,outstring.Length-1);
             
             return outstring;
+        }
+        public static Matrix<double> linearise(Matrix<double> inmatrix, SortedSet<double> cha)
+        {
+            Matrix<double> outmatrix=inmatrix.Clone();
+            bool isreduceable;
+            double prediction;
+            for (int i=1; i < outmatrix.RowCount - 1; i++)
+            {
+                isreduceable=true;
+                for(int j = 0; j < outmatrix.ColumnCount; j++)
+                {
+                    prediction=outmatrix[i-1,j]+(outmatrix[i+1,j]-outmatrix[i-1,j])*(cha.ElementAt(i)-cha.ElementAt(i-1))/(cha.ElementAt(i+1)-cha.ElementAt(i-1));
+                    if (outmatrix[i, j] == 0 && Math.Abs(prediction-outmatrix[i, j])>Math.Max(Math.Abs(outmatrix[i-1,j]),Math.Abs(outmatrix[i+1,j])*0.01))
+                    {
+                        isreduceable=false;
+                        break;
+                    }
+                    else if (Math.Abs((prediction-outmatrix[i, j])/outmatrix[i, j]) > 0.01)
+                    {
+                        isreduceable=false;
+                        break;
+                    }
+                }
+                if (isreduceable)
+                {
+                    outmatrix=outmatrix.RemoveRow(i);
+                    cha.Remove(cha.ElementAt(i));
+                    i=1;
+                }
+            }
+            return outmatrix;
         }
         public static Matrix<double> beamactioncalc(List<double[,]> beamloads, SortedSet<double> chapoints, double axial,double bending,double rotation,double rotation2)
         {
