@@ -40,14 +40,14 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       dynamic xlApp = ExcelDnaUtil.Application;
       String wb = xlApp.ActiveWorkbook.name;
       String ws = xlApp.ActiveSheet.name;
-      String cell = xlApp.ActiveCell.offset(1).address;
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1).value="FrameXL V0.2. Created by A. Shaw.";
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1).resize(1,2).merge();
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,2).value="Automatically update matrix calculations:";
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,2).resize(1,2).merge();
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,4).style = "Input";
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,4).validation.add(3, 3, 3, "ON,OFF", 0);
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,4).value="ON";
+      String cell = xlApp.ActiveCell.offset(1,1).address;
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).value="FrameXL V0.2. Created by A. Shaw.";
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).resize(1,2).merge();
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,1).value="Auto. update matrix calculations:";
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,1).resize(1,2).merge();
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,3).style = "Input";
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,3).validation.add(3, 3, 3, "ON,OFF", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,3).value="ON";
       int offs=0;
 
       string[] nodes1 = new string[] { "x Coord.(m)", "y Coord. (m)", "x fixity","y fixity","Rotation fixity"};
@@ -105,6 +105,15 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 7].numberformat="0.00%";
       offs=offs+5;
 
+      string[] combination1 = new string[] { "Combination Load Case Number", "Add Cases / Envelope Cases", "Case Descriptor","Enveloped effect direction (for envelope)"};
+      object[] combination2 = new object[] { 4, "Add", "1*LC1+2*LC3"};
+      createinputblock(xlApp, wb, ws, cell, offs, "Combination Case Inputs", combination1, 1, combination2);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 3].validation.add(3, 3, 3, "x,y,zz", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 3].validation.add(3, 3, 3, "x,y,zz", 0);
+      offs=offs+5;
+
       if ((string)tg == "text")
       {
         string[] extraction1 = new string[] { "Load Case List", "Actions/Displacements", "Nodes/Elements","Element/Node Index List"};
@@ -118,9 +127,9 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 2].validation.add(3, 3, 3, "Nodes,Elements", 0);
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 2].validation.add(3, 3, 3, "Nodes,Elements", 0);
         offs=offs+5;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1].resize[20,10].Columns.Autofit();
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
       
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysis(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(offs-3, 0).resize(2,4).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysis(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,4).address+","+ xlApp.range(cell).offset(offs-3, 0).resize(2,4).address+ "))";
       }
       else if ((string)tg == "simple")
       {
@@ -143,26 +152,26 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 6].validation.add(3, 3, 3, "Nodes,Elements", 0);
         string requestsaddress=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 0].address;
         offs=offs+4;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1].resize[20,10].Columns.Autofit();
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address + "))";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].resize(5,6).HorizontalAlignment=5;
-        string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].address();
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,4).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].resize(5,6).HorizontalAlignment=5;
+        string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].address();
         offs=offs+5;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,6].value="Results Table";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,6].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,6].resize[1,7].Columns.Autofit();
-        double lft = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5].left;
-        double top = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5].top;
-        double rght =xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5,6].left;
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,5].value="Results Table";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,5].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,5].resize[1,6].Columns.Autofit();
+        double lft = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5,-1].left;
+        double top = xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5,-1].top;
+        double rght =xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs-5,5].left;
         ChartObject chartob = xlApp.workbooks[wb].worksheets[ws].ChartObjects.Add(lft, top, rght-lft, 0.9*(rght-lft));
         Chart chrt = chartob.Chart;
         chrt.PlotVisibleOnly = false;
         chrt.HasTitle = true;
 
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].formula2="=\"LC\" & "+requestsaddress + "& \", \" & " + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"<>\"Displacements\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,4].formula2="=" + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"=\"Actions\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2="=\"LC\" & "+requestsaddress + "& \", \" & " + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"<>\"Displacements\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,3].formula2="=" + xlApp.range(requestsaddress).offset(0,2).address + "& \", \" & "+ xlApp.range(requestsaddress).offset(0,1).address+ " & if("+xlApp.range(requestsaddress).offset(0,1).address +"=\"Actions\"," + "\", Dirn. \" &"+xlApp.range(requestsaddress).offset(0,3).address+ ",\"\")";
        
-        chrt.ChartTitle.Text = "='"+ws+"'!" +xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].address;
+        chrt.ChartTitle.Text = "='"+ws+"'!" +xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].address;
         chrt.ChartType = Microsoft.Office.Interop.Excel.XlChartType.xlXYScatter;
         chrt.Axes(2).MajorGridlines.Delete();
         Microsoft.Office.Interop.Excel.SeriesCollection hlder = chrt.SeriesCollection();
@@ -174,9 +183,9 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         nodeseries.Name = "Nodes";
         nodeseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleCircle;
         nodeseries.Format.Line.Visible = 0;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1].formula2 = "=structuralanalysisnodecoords(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +")";
-        nodeseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1].resize[500, 1].address];
-        nodeseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 1].resize[500, 1].address];
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,-1].formula2 = "=structuralanalysisnodecoords(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +")";
+        nodeseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,-1].resize[500, 1].address];
+        nodeseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 0].resize[500, 1].address];
 
         hlder.NewSeries();
         Series elementseries = chrt.SeriesCollection(2);
@@ -186,9 +195,9 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         elementseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
         elementseries.Format.Line.Visible = MsoTriState.msoTrue;
         elementseries.Format.Line.Weight=3;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4,2].formula2 = "=structuralanalysiselementcoords(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address +")";
-        elementseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4,2].resize[500, 1].address];
-        elementseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4, 3].resize[500, 1].address];
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4,1].formula2 = "=structuralanalysiselementcoords(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address +")";
+        elementseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4,1].resize[500, 1].address];
+        elementseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+4, 2].resize[500, 1].address];
 
         hlder.NewSeries();
         Series effectseries = chrt.SeriesCollection(3);
@@ -198,10 +207,10 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         effectseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
         effectseries.Format.Line.Visible = MsoTriState.msoTrue;;
         effectseries.Format.Line.Weight=2;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].formula2 = "=structuralanalysisgrapheffects(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+"," +resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+ ","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,3].formula2 = "=structuralanalysisgrapheffects(" + xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+"," +resultsblockad+"#,"+ xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+ ","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,7].resize[1,7].Columns.Autofit();
-        effectseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 4].resize[2000, 1].address];
-        effectseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 5].resize[2000, 1].address];
+        effectseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 3].resize[2000, 1].address];
+        effectseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 4].resize[2000, 1].address];
 
         hlder.NewSeries();
         Series rangeseries = chrt.SeriesCollection(4);
@@ -211,9 +220,9 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         rangeseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
         rangeseries.Format.Line.Visible = MsoTriState.msoTrue;;
         rangeseries.Format.Line.Weight=0;
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].formula2 = "=structuralanalysisgraphrange("+ xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1].address+"#,"+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].address+"#)";
-        rangeseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 2].resize[3, 1].address];
-        rangeseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 3].resize[3, 1].address];
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,1].formula2 = "=structuralanalysisgraphrange("+ xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,-1].address+"#,"+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,3].address+"#)";
+        rangeseries.XValues = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 1].resize[3, 1].address];
+        rangeseries.Values = xlApp.workbooks[wb].worksheets[ws].range[xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1, 2].resize[3, 1].address];
         chrt.Legend.LegendEntries(4).delete();
 
         chrt.Axes(1).HasTitle = true;
@@ -230,7 +239,8 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
     }
     public void createinputblock(dynamic xlApp, string wb, string ws, string cell, int offst, string ttl, string[] hdings, int scndrow, object[] contents1 = null, object[] contents2 = null)
     {
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst, 0] = ttl;
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst, -1] = ttl;
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst+1, -1] = "Indexes";
       for (int i = 0; i < hdings.GetLength(0); i++)
       {
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 1, i] = hdings[i];
@@ -264,6 +274,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       {
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 3, i] = contents2[i];
       }
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst+2, -1].formula2 = "=structuralanalysisarrayindexes("+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst+2].resize[scndrow+1].address+")";
     }
   }
 }

@@ -674,13 +674,13 @@ namespace TESTEXDNA
             txt=Regex.Replace(txt,@"\s+",string.Empty);
             int startstring=0;
             int nextindex;
-            List<int> outlist= new List<int>();
+            SortedSet<int> outset= new SortedSet<int>();
             List<int> holder;
             if (txt == "-1")
             {
                 foreach (int ky in kys)
                 {
-                    outlist.Add(ky);
+                    outset.Add(ky);
                 }
             }
             else
@@ -691,7 +691,7 @@ namespace TESTEXDNA
                     holder=stiffnessmatcalcs.lcmemberfragment(txt.Substring(startstring,nextindex-startstring),cap);
                     for (int i = 0; i < holder.Count; i++)
                     {
-                        outlist.Add(holder[i]);
+                        outset.Add(holder[i]);
                     }
                     startstring=nextindex+1;
                     nextindex=txt.IndexOf(",", startstring);
@@ -699,10 +699,10 @@ namespace TESTEXDNA
                 holder=stiffnessmatcalcs.lcmemberfragment(txt.Substring(startstring),cap);
                 for (int i = 0; i < holder.Count; i++)
                 {
-                    outlist.Add(holder[i]);
+                    outset.Add(holder[i]);
                 }
             }
-            outlist.Sort();
+            List<int> outlist=outset.ToList();
             return outlist;
         }
         public static List<int> lcmemberfragment(string txt,int cap)
@@ -743,17 +743,49 @@ namespace TESTEXDNA
             
             return outlist;
         }
-        public static string[,] extraction(object[,] extracts,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Matrix<double>> resultsholder2,Dictionary<int,Dictionary<int,List<int>>> nodeloadsholder,Dictionary<int,List<Vector<double>>> fextholder,double[,] tloads, int nodecount,int elementcount,List<int> springmap,double[,] beamgeom,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints)
+        public static string[,] extraction(object[,] extracts,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Matrix<double>> resultsholder2,Dictionary<int,Dictionary<int,List<int>>> nodeloadsholder,Dictionary<int,List<Vector<double>>> fextholder,double[,] tloads, int nodecount,int elementcount,List<int> springmap,double[,] beamgeom,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints, object[,] tlcomb)
         {
             string[,] outarray=new string[extracts.GetLength(0),1];
             List<int> lclist;
+            List<int> lcomblist= new List<int>();
+            for (int i = 0; i < tlcomb.GetLength(0); i++)
+            {
+                lcomblist.Add(Convert.ToInt32(tlcomb[i,0]));
+            }
+            SortedSet<int> lcombset=new SortedSet<int>();
+            lcombset.UnionWith(lcomblist);
+            if (lcombset.Count != lcomblist.Count)
+            {
+                return new string[,] {{"Multiple load combinations share identical LC indexes"}};
+            }
+            lclist=resultsholder.Keys.ToList();
+            for (int i = 0; i <lclist.Count; i++)
+            {
+               if (lcombset.Contains(lclist[i]))
+                {
+                    return new string[,] {{"Load combination shares index with existing load case"}};
+                }
+            }
+            SortedSet<int> allLCindexes=new SortedSet<int>(lcombset);
+            allLCindexes.UnionWith(resultsholder.Keys.ToList());
+            SortedSet<int> lcombsetactive;
             List<int> memberlist;
             int indexcount;
             string holder="";
             List<int> inlist;
             for (int i=0; i < extracts.GetLength(0); i++)
             {
-                lclist = stiffnessmatcalcs.lcmemberstringread(extracts[i,0].ToString()?? string.Empty, resultsholder.Keys.ToList().Max(),resultsholder.Keys.ToList());
+                lclist = stiffnessmatcalcs.lcmemberstringread(extracts[i,0].ToString()?? string.Empty, allLCindexes.Max(),allLCindexes.ToList());
+                lcombsetactive=new SortedSet<int>();
+                for (int j = 0; j <lclist.Count; j++)
+                {
+                    if (lcombset.Contains(lclist[j]))
+                        {
+                            lcombsetactive.Add(lclist[j]);
+                            lclist.RemoveAt(j);
+                            j--;
+                        }
+                }
                 if (Convert.ToInt32(extracts[i, 2]) == 0)
                 {
                     indexcount=nodecount;
@@ -1705,18 +1737,41 @@ namespace TESTEXDNA
                 }
             }
             object[,] outarray= new object[valids.Count,inarray.GetLength(1)];
-                int rowit=0;
-                foreach (int valid in valids)
+            int rowit=0;
+            foreach (int valid in valids)
+            {
+                for (int j = 0; j < inarray.GetLength(1); j++)
                 {
-                    for (int j = 0; j < inarray.GetLength(1); j++)
+                    if (!(inarray[valid,j] is ExcelEmpty)&&!(inarray[valid,j] is ExcelMissing))
                     {
-                        if (!(inarray[valid,j] is ExcelEmpty)&&!(inarray[valid,j] is ExcelMissing))
-                        {
-                            outarray[rowit,j]=inarray[valid,j];
-                        }
+                        outarray[rowit,j]=inarray[valid,j];
                     }
-                    rowit++;
                 }
+                rowit++;
+            }
+            return outarray;
+        }
+        public static object[,] arrayindexes(object[,] inarray)
+        {
+            List<int> valids= new List<int>();
+            for (int i = 0; i < inarray.GetLength(0); i++)
+            {
+                if (!(inarray[i,0] is ExcelEmpty))
+                {
+                    valids.Add(i);
+                }
+            }
+            object[,] outarray= new object[inarray.GetLength(0),1];
+            for (int i = 0; i < inarray.GetLength(0); i++)
+            {
+                outarray[i,0]="";
+            }
+            int rowit=1;
+            foreach (int valid in valids)
+            {
+                outarray[valid,0]=rowit;
+                rowit++;
+            }
             return outarray;
         }
         public static double[,] nodefilter(object[,] inarray)
@@ -2379,7 +2434,7 @@ namespace TESTEXDNA
             {
                 for (int j = tablist.Count-1; j >0; j--)
                 {
-                    if (tablist[i][0] == tablist[j][0])
+                    if (tablist[i][0] == tablist[j][0] && i!=j)
                     {
                         tablist[i][1]=  tablist[i][1]+ tablist[j][1];
                         tablist[i][2]=  tablist[i][2]+ tablist[j][2];
@@ -2602,7 +2657,7 @@ namespace TESTEXDNA
             {
                 for (int j = pointlist.Count-1; j >0; j--)
                 {
-                    if (pointlist[i][0] == pointlist[j][0] &&pointlist[i][1] == pointlist[j][1])
+                    if (pointlist[i][0] == pointlist[j][0] &&pointlist[i][1] == pointlist[j][1] &&i!=j)
                     {
                         pointlist[i][2]=  pointlist[i][2]+ pointlist[j][2];
                         pointlist.RemoveAt(j);
@@ -3118,7 +3173,7 @@ namespace TESTEXDNA
     }
     class controllerclass
     {
-        public static string[,] controller(double[,] tnodes,double[,] telements,double[,] tloads,double[,] tbloads,object[,] extracts, Dictionary<(int,int),List<double[]>> tnsprings)
+        public static string[,] controller(double[,] tnodes,double[,] telements,double[,] tloads,double[,] tbloads,object[,] extracts, Dictionary<(int,int),List<double[]>> tnsprings,object[,] tlcomb)
         {
             var M=Matrix<double>.Build;
             double[,] beamgeom=stiffnessmatcalcs.beamgeom(tnodes,telements);
@@ -3193,7 +3248,7 @@ namespace TESTEXDNA
             //{
                 //outmatrix=outmatrix.Append(resultsholder[key]);
             //}
-            string[,] extracted=stiffnessmatcalcs.extraction(extracts,resultsholder,resultsholder2,nodeloadsholder,fextholder,tloads,nodecount,elementcount,springmap,beamgeom,beamloadsholder,beamchapoints);
+            string[,] extracted=stiffnessmatcalcs.extraction(extracts,resultsholder,resultsholder2,nodeloadsholder,fextholder,tloads,nodecount,elementcount,springmap,beamgeom,beamloadsholder,beamchapoints,tlcomb);
 
             
 

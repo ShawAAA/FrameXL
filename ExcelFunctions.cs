@@ -19,10 +19,12 @@
             [ExcelArgument(Name = "Beam Loads")]
             double[,] bloads,
             [ExcelArgument(Name = "Extracts")]
-            object[,] extracts)
+            object[,] extracts,
+            [ExcelArgument(Name = "Load Combinations")]
+            object[,] lcomb)
 
         {
-            return controllerclass.controller(nodes,elements,loads,bloads,extracts, new  Dictionary<(int,int),List<double[]>>());
+            return controllerclass.controller(nodes,elements,loads,bloads,extracts, new  Dictionary<(int,int),List<double[]>>(),lcomb);
         }
 
         [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =true,Description = "Structural Analysis-text")]
@@ -35,6 +37,8 @@
             object[,] loads,
             [ExcelArgument(Name = "Beam Loads")]
             object[,] bloads,
+            [ExcelArgument(Name = "Load Combinations")]
+            object[,] lcomb,
             [ExcelArgument(Name = "Extracts")]
             object[,] extracts)
 
@@ -45,8 +49,9 @@
             double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
             double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements,tnodes);
             object[,] textracts=interfacefunctions.extractsfilter(interfacefunctions.filterarrayempties(extracts));
+            object[,] tlcomb=interfacefunctions.filterarrayempties(lcomb);
 
-            return controllerclass.controller(tnodes,telements,tnloads,tbloads,textracts,tnsprings);
+            return controllerclass.controller(tnodes,telements,tnloads,tbloads,textracts,tnsprings,tlcomb);
         }
         [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =true,Description = "Structural Analysis-simple")]
         public static object[,] Structuralanalysissimple(
@@ -57,7 +62,9 @@
             [ExcelArgument(Name = "Node Loads")]
             object[,] loads,
             [ExcelArgument(Name = "Beam Loads")]
-            object[,] bloads)
+            object[,] bloads,
+            [ExcelArgument(Name = "Load Combinations")]
+            object[,] lcomb)
 
         {
             double[,] tnodes=interfacefunctions.nodefilter(interfacefunctions.filterarrayempties(nodes));
@@ -66,8 +73,9 @@
             double[,] tnloads=interfacefunctions.nloadsfilter(interfacefunctions.filterarrayempties(loads),tnodes);
             double[,] tbloads=interfacefunctions.bloadsfilter(interfacefunctions.filterarrayempties(bloads),telements,tnodes);
             object[,] textracts=new object[,] {{-1,0,0,-1},{-1,1,0,-1},{-1,0,1,-1},{-1,1,1,-1}};
+            object[,] tlcomb=interfacefunctions.filterarrayempties(lcomb);
 
-            return controllerclass.controller(tnodes,telements,tnloads,tbloads,textracts,tnsprings);
+            return controllerclass.controller(tnodes,telements,tnloads,tbloads,textracts,tnsprings,tlcomb);
         }
         [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =true,Description = "Structural Analysis-node graphing")]
         public static object[,] Structuralanalysisnodecoords(
@@ -150,6 +158,14 @@
 
         {
             return graphingtablefunctions.graphrangeset(nodes,effects);
+        }
+        [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =false,Description = "Index Control")]
+        public static object[,] Structuralanalysisarrayindexes(
+            [ExcelArgument(Name = "array")]
+            object[,] inarray)
+
+        {
+            return interfacefunctions.arrayindexes(inarray);
         }
 
         
