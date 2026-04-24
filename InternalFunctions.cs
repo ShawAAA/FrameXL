@@ -34,6 +34,7 @@ using System.Reflection;
 using ExcelDna.Integration;
 using MathNet.Numerics.Random;
 using System.Runtime.InteropServices;
+using System.Data.SqlTypes;
 
 namespace TESTEXDNA
 {
@@ -773,6 +774,12 @@ namespace TESTEXDNA
             int indexcount;
             string holder="";
             List<int> inlist;
+            Dictionary<int,List<object>> combsdict1= new Dictionary<int,List<object>>();
+            for (int i=0; i < tlcomb.GetLength(0); i++)
+            {
+                combsdict1.Add(Convert.ToInt32(tlcomb[i,0]),new List<object> {tlcomb[i,1],tlcomb[i,2],tlcomb[i,3]});
+            }
+            Dictionary<int,List<double[]>> combsdict2= stiffnessmatcalcs.lcombcaseconverter(combsdict1);
             for (int i=0; i < extracts.GetLength(0); i++)
             {
                 lclist = stiffnessmatcalcs.lcmemberstringread(extracts[i,0].ToString()?? string.Empty, allLCindexes.Max(),allLCindexes.ToList());
@@ -853,6 +860,114 @@ namespace TESTEXDNA
             }
 
             return outarray2;
+        }
+        public static Dictionary<int,List<double[]>> lcombcaseconverter(Dictionary<int,List<object>> combsdict1)
+        {
+            List<double[]> holder;
+             Dictionary<int,List<double[]>> outdict = new  Dictionary<int,List<double[]>>();
+            foreach (int key in combsdict1.Keys)
+            {
+                if ((string)combsdict1[key][0] == "Add")
+                {
+                    holder=stiffnessmatcalcs.lcombaddconvert((string)combsdict1[key][1]);
+                }
+                else
+                {
+                    holder=stiffnessmatcalcs.lcombenvconvert((string)combsdict1[key][1]);
+                }
+                outdict.Add(key,holder);
+            }
+            return outdict;
+        }
+        public static List<double[]> lcombaddconvert(string lcombstring)
+        {
+            if (lcombstring.ToLower().Contains("to") || lcombstring.ToLower().Contains(","))
+            {
+                throw new Exception("providing enveloping string for add string");
+            }
+            string[] splitstring=lcombstring.ToLower().Replace(" ","").Replace("*lc","^").Replace("lc","^").Replace("*","^").Split("^");
+            List<double> factorlist=new List<double>();
+            List<double> caselist=new List<double>();
+            string[] tempsplit;
+            factorlist.Add(double.Parse(splitstring[0]));
+            for (int i = 1; i < splitstring.GetLength(0) - 1; i++)
+            {
+                if (splitstring[i].Contains("+"))
+                {
+                    tempsplit=splitstring[i].Split("+");
+                    factorlist.Add(double.Parse(tempsplit[1]));
+                }
+                else
+                {
+                    tempsplit=splitstring[i].Split("-");
+                    factorlist.Add(double.Parse("-"+tempsplit[1]));
+                }
+                caselist.Add(double.Parse(tempsplit[0]));
+            }
+            caselist.Add(double.Parse(splitstring[splitstring.GetLength(0)-1]));
+            List<double[]> outlist= new List<double[]>();
+            for (int i = 0; i < factorlist.Count; i++)
+            {
+                outlist.Add(new double[] {caselist[i],factorlist[i]});
+            }
+            return outlist;
+        }
+        public static List<double[]> lcombenvconvert(string lcombstring)
+        {
+            string[] splitstring=lcombstring.ToLower().Replace(" ","").Replace("*lc","^").Replace("lc","^").Replace("*","^").Split(",");
+            List<double[]> holder;
+            List<double[]> outlist= new List<double[]>();
+            for(int i = 0; i < splitstring.GetLength(0); i++)
+            {
+                holder=lcombenvminiparse(splitstring[i]);
+                for (int j = 0; j < holder.Count; j++)
+                {
+                    outlist.Add(holder[j]);
+                }
+            }
+            return outlist;
+        }
+        public static List<double[]> lcombenvminiparse(string ministring)
+        {
+            string[] splitstring;
+            if (ministring.Contains("to"))
+            {
+                splitstring=ministring.Split("to");
+                string[] splitstring2=splitstring[0].Split("^");
+                double case1=double.Parse(splitstring2[1]);
+                double factor1=double.Parse(splitstring2[0]);
+                splitstring2=splitstring[1].Split("^");
+                double case2=double.Parse(splitstring2[1]);
+                double factor2=double.Parse(splitstring2[0]);
+                double increment;
+                if (case1 == case2)
+                {
+                    return new List<double[]> {new double[] {case1,factor1}};
+                }
+                List<double[]> outlist =new List<double[]>();
+                if (case2 > case1)
+                {
+                    increment=(factor2-factor1)/(case2-case1);
+                    for (int i = 0; i <= case2 - case1; i++)
+                    {
+                        outlist.Add(new double[] {case1+i,Math.Round(factor1+i*increment,6)});
+                    }
+                }
+                else
+                {
+                    increment=(factor1-factor2)/(case1-case2);
+                    for (int i = 0; i <= case1 - case2; i++)
+                    {
+                        outlist.Add(new double[] {case2+i,Math.Round(factor2+i*increment,6)});
+                    }
+                }
+                return outlist;
+            }
+            else
+            {
+                splitstring=ministring.Split("^");
+                return new List<double[]> {new double[] {double.Parse(splitstring[1]),double.Parse(splitstring[0])}};
+            }
         }
         public static string dispnodes(Dictionary<int,Matrix<double>> resultsholder,List<int> lclist, List<int> nodelist)
         {
@@ -1192,6 +1307,36 @@ namespace TESTEXDNA
 
 
             return effectsholder;
+        }
+        public static string actionnodesrebuild(Dictionary<int,Matrix<double>> resultsholder2,Dictionary<int,List<Vector<double>>> fextholder,List<int> lclist, List<int> nodelist,List<int> springmap,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        {
+            string outstring="";
+            string tempstring;
+            double reacholder;
+            int currnode;
+            int mappedindex;
+            List<double> lcvalues;
+            Dictionary<int,List<double>> lcdict=new Dictionary<int,List<double>>();
+            for (int i = 0; i < lclist.Count; i++)
+            {
+                lcvalues=new List<double>();
+                for (int j = 0; j < nodelist.Count; j++)
+                {
+                    currnode=nodelist[j];
+                    for (int k = 0; k < 3; k++)
+                    {
+                        mappedindex=springmap[(currnode-1)*3+k];
+                        reacholder=-fextholder[lclist[i]][1][mappedindex]+resultsholder2[lclist[i]][mappedindex,1];
+                        if (Math.Abs(reacholder) < Math.Pow(10, -12))
+                        {
+                            reacholder=0;
+                        }
+                        lcvalues.Add(reacholder);
+                    }
+                }
+                lcdict.Add(lclist[i],lcvalues);
+            }
+            return outstring;
         }
     }
     class fixedendcreator
