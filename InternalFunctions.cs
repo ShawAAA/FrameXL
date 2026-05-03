@@ -35,6 +35,9 @@ using ExcelDna.Integration;
 using MathNet.Numerics.Random;
 using System.Runtime.InteropServices;
 using System.Data.SqlTypes;
+using MathNet.Numerics.Integration;
+using System.Runtime.Serialization;
+using System.Collections.Immutable;
 
 namespace TESTEXDNA
 {
@@ -811,19 +814,19 @@ namespace TESTEXDNA
                 switch (Convert.ToInt32(extracts[i,1]) + Convert.ToInt32(extracts[i,2]) * 2)
                 {
                     case 0:
-                        holder="Node Reactions$"+stiffnessmatcalcs.actionnodes(resultsholder2,fextholder,lclist,memberlist,springmap);                 
+                        holder="Node Reactions$"+stiffnessmatcalcs.actionnodesrebuild(resultsholder2,fextholder,lclist,memberlist,springmap,lcombsetactive,combsdict1,combsdict2);                 
 
                         break;
                     case 1:
-                        holder="Node Displacements$"+stiffnessmatcalcs.dispnodes(resultsholder,lclist,memberlist);
+                        holder="Node Displacements$"+stiffnessmatcalcs.dispnodesrebuild(resultsholder,lclist,memberlist,lcombsetactive,combsdict1,combsdict2);
 
                         break;
                     case 2:
-                        holder="Element Actions$"+stiffnessmatcalcs.actionelement(beamgeom,resultsholder,beamloadsholder,beamchapoints,lclist,memberlist,nodecount*6+elementcount*6);
+                        holder="Element Actions$"+stiffnessmatcalcs.actionelementrebuild(beamgeom,resultsholder,beamloadsholder,beamchapoints,lclist,memberlist,nodecount*6+elementcount*6,lcombsetactive,combsdict1,combsdict2);
 
                         break;
                     case 3:
-                        holder="Element Displacements$"+stiffnessmatcalcs.dispelement(beamgeom,resultsholder,beamloadsholder,beamchapoints,lclist,memberlist,nodecount*6+elementcount*6);
+                        holder="Element Displacements$"+stiffnessmatcalcs.dispelementrebuild(beamgeom,resultsholder,beamloadsholder,beamchapoints,lclist,memberlist,nodecount*6+elementcount*6,lcombsetactive,combsdict1,combsdict2);
 
                         break;
                 }
@@ -1096,7 +1099,7 @@ namespace TESTEXDNA
                         bloads=new List<double[,]>();
                     }
                     effectmatrix=stiffnessmatcalcs.beamdispcalc(bloads,cha,axialforce,axialtrans,bendingtransforce,bendingmoment,rotation,bendingtrans,beamgeom[elementlist[j]-1,4],beamgeom[elementlist[j]-1,5],beamgeom[elementlist[j]-1,0]);
-                    effectmatrix=stiffnessmatcalcs.linearise(effectmatrix,cha);
+                    (cha,effectmatrix)=stiffnessmatcalcs.linearise(effectmatrix,cha);
                     for (int k = 0; k < effectmatrix.RowCount; k++)
                     {
                         tempstring=tempstring+string.Format("{0:G4}", cha.ElementAt(k))+"|"+string.Format("{0:G4}", cha.ElementAt(k)*L)+"#";
@@ -1169,7 +1172,7 @@ namespace TESTEXDNA
                         cha=new SortedSet<double> {0,1};
                         effectmatrix=Matrix<double>.Build.DenseOfArray(new double[,] {{-axial,bending,-rotation},{-axial,bending,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]}});
                     }
-                    effectmatrix=stiffnessmatcalcs.linearise(effectmatrix,cha);
+                    (cha,effectmatrix)=stiffnessmatcalcs.linearise(effectmatrix,cha);
                     for (int k = 0; k < effectmatrix.RowCount; k++)
                     {
                         if (cha.ElementAt(k) < 0.0001)
@@ -1201,7 +1204,7 @@ namespace TESTEXDNA
             
             return outstring;
         }
-        public static Matrix<double> linearise(Matrix<double> inmatrix, SortedSet<double> cha)
+        public static (SortedSet<double>,Matrix<double>) linearise(Matrix<double> inmatrix,  SortedSet<double> cha)
         {
             Matrix<double> outmatrix=inmatrix.Clone();
             bool isreduceable;
@@ -1227,10 +1230,10 @@ namespace TESTEXDNA
                 {
                     outmatrix=outmatrix.RemoveRow(i);
                     cha.Remove(cha.ElementAt(i));
-                    i=1;
+                    i=0;
                 }
             }
-            return outmatrix;
+            return (cha,outmatrix);
         }
         public static Matrix<double> beamactioncalc(List<double[,]> beamloads, SortedSet<double> chapoints, double axial,double bending,double rotation,double rotation2)
         {
@@ -1311,7 +1314,6 @@ namespace TESTEXDNA
         public static string actionnodesrebuild(Dictionary<int,Matrix<double>> resultsholder2,Dictionary<int,List<Vector<double>>> fextholder,List<int> lclist, List<int> nodelist,List<int> springmap,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
         {
             string outstring="";
-            string tempstring;
             double reacholder;
             int currnode;
             int mappedindex;
@@ -1336,7 +1338,633 @@ namespace TESTEXDNA
                 }
                 lcdict.Add(lclist[i],lcvalues);
             }
+            for (int i=0; i < lcombsetactive.Count; i++)
+            {
+                if (stiffnessmatcalcs.lcombcontains(lcdict.Keys.ToList(), combsdict2[lcombsetactive.ElementAt(i)]))
+                {
+                    lcdict.Add(lcombsetactive.ElementAt(i),stiffnessmatcalcs.lcombcreateresultsnode(lcdict,combsdict1[lcombsetactive.ElementAt(i)],combsdict2[lcombsetactive.ElementAt(i)],3*nodelist.Count));
+                    lcombsetactive.Remove(lcombsetactive.ElementAt(i));
+                    i=-1;
+                }
+            }
+            if(lcombsetactive.Count>0)
+            {
+                throw new Exception("lcombs referencing case that does not exist");
+            }
+            foreach (int lc in lcdict.Keys.ToImmutableSortedSet())
+            {
+                
+                if (lcdict[lc].Count <= 3*nodelist.Count)
+                {
+                    outstring=outstring+"*?*" + 0 +"*!*" +lc+"~"+ nodelist.Count +"*.*";
+                    for (int i = 0; i < nodelist.Count; i++)
+                    {
+                        outstring= outstring+nodelist[i]+"/";
+                        for(int j = 0; j < 3; j++)
+                        {
+                            outstring= outstring+lcdict[lc][i*3+j] + ",";
+                        }
+                        outstring= outstring.Substring(0, outstring.Length-1)+";";
+                    }
+                }
+                else
+                {
+                    outstring=outstring+"*?*" + 1 +"*!*" +lc+"~"+ nodelist.Count +"*.*";
+                    for (int k = 0; k < 6; k++)
+                    {
+                        for (int i = 0; i < nodelist.Count; i++)
+                        {
+                            outstring= outstring+nodelist[i]+"/";
+                            for(int j = 0; j < 3; j++)
+                            {
+                                outstring= outstring+lcdict[lc][i*3+j+3*k*nodelist.Count] + ",";
+                            }
+                            outstring= outstring.Substring(0, outstring.Length-1)+";";
+                        }
+                    }
+                    
+                }
+                outstring= outstring.Substring(0, outstring.Length-1)+":";
+                
+            }
+            outstring=outstring.Substring(0,outstring.Length-1);
             return outstring;
+        }
+        public static string dispnodesrebuild(Dictionary<int,Matrix<double>> resultsholder,List<int> lclist, List<int> nodelist,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        {
+            string outstring="";
+            double moveholder;
+            int currnode;
+            List<double> lcvalues;
+            Dictionary<int,List<double>> lcdict=new Dictionary<int,List<double>>();
+            for (int i = 0; i < lclist.Count; i++)
+            {
+                lcvalues=new List<double>();
+                for (int j = 0; j < nodelist.Count; j++)
+                {
+                    currnode=nodelist[j];
+                    for (int k = 0; k < 3; k++)
+                    {
+                        moveholder=resultsholder[lclist[i]][(nodelist[j]-1)*3+k,0];
+                        if (Math.Abs(moveholder) < Math.Pow(10, -12))
+                        {
+                            moveholder=0;
+                        }
+                        lcvalues.Add(moveholder);
+                    }
+                }
+                lcdict.Add(lclist[i],lcvalues);
+            }
+            for (int i=0; i < lcombsetactive.Count; i++)
+            {
+                if (stiffnessmatcalcs.lcombcontains(lcdict.Keys.ToList(), combsdict2[lcombsetactive.ElementAt(i)]))
+                {
+                    lcdict.Add(lcombsetactive.ElementAt(i),stiffnessmatcalcs.lcombcreateresultsnode(lcdict,combsdict1[lcombsetactive.ElementAt(i)],combsdict2[lcombsetactive.ElementAt(i)],3*nodelist.Count));
+                    lcombsetactive.Remove(lcombsetactive.ElementAt(i));
+                    i=-1;
+                }
+            }
+            if(lcombsetactive.Count>0)
+            {
+                throw new Exception("lcombs referencing case that does not exist");
+            }
+            foreach (int lc in lcdict.Keys.ToImmutableSortedSet())
+            {
+                
+                if (lcdict[lc].Count <= 3*nodelist.Count)
+                {
+                    outstring=outstring+"*?*" + 0 +"*!*" +lc+"~"+ nodelist.Count +"*.*";
+                    for (int i = 0; i < nodelist.Count; i++)
+                    {
+                        outstring= outstring+nodelist[i]+"/";
+                        for(int j = 0; j < 3; j++)
+                        {
+                            outstring= outstring+lcdict[lc][i*3+j] + ",";
+                        }
+                        outstring= outstring.Substring(0, outstring.Length-1)+";";
+                    }
+                }
+                else
+                {
+                    outstring=outstring+"*?*" + 1 +"*!*" +lc+"~"+ nodelist.Count +"*.*";
+                    for (int k = 0; k < 6; k++)
+                    {
+                        for (int i = 0; i < nodelist.Count; i++)
+                        {
+                            outstring= outstring+nodelist[i]+"/";
+                            for(int j = 0; j < 3; j++)
+                            {
+                                outstring= outstring+lcdict[lc][i*3+j+3*k*nodelist.Count] + ",";
+                            }
+                            outstring= outstring.Substring(0, outstring.Length-1)+";";
+                        }
+                    }
+                    
+                }
+                outstring= outstring.Substring(0, outstring.Length-1)+":";
+                
+            }
+            outstring=outstring.Substring(0,outstring.Length-1);
+            return outstring;
+        }
+        public static string dispelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        {
+            string outstring="";
+            Matrix<double> effectmatrix;
+            double L;
+            double s;
+            double c;
+            List<double[,]> bloads;
+            SortedSet<double> cha;
+            double axialforce;
+            double axialtrans;
+            double bendingtransforce;
+            double bendingmoment;
+            double bendingtrans;
+            double rotation;
+            int beamcount=beamgeom.GetLength(0);
+            int beamzeroindex=totaldof-beamcount*6;
+            bool isvalid;
+            double moveholder;
+            int n=4;
+            Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>> lcdict=new Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>>();
+            Dictionary<int,List<(SortedSet<double>,Matrix<double>)>> mbdict;
+            for (int i = 0; i < lclist.Count; i++)
+            {
+                mbdict=new Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>();
+                for (int j = 0; j < elementlist.Count; j++)
+                {
+                    
+                    s=Math.Sin(beamgeom[elementlist[j]-1,3]);
+                    c=Math.Cos(beamgeom[elementlist[j]-1,3]);
+                    axialforce=-(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*s);
+                    axialtrans=(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,0]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,0]*s);
+                    bendingtransforce=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*c;
+                    bendingmoment=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,1];
+                    bendingtrans=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,0]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,0]*c;
+                    rotation=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,0];
+                    isvalid=false;
+                    if (beamloadsholder.ContainsKey(lclist[i]))
+                    {
+                        if (beamloadsholder[lclist[i]].ContainsKey(elementlist[j]))
+                        {
+                            isvalid=true;
+                        }
+                    }
+                    cha=new SortedSet<double>();
+                    for (int k = 0; k <= Math.Pow(2, n); k++)
+                    {
+                        cha.Add(k/Math.Pow(2,n));
+                    }
+                    if (isvalid)
+                    {
+                        cha.UnionWith(beamchapoints[lclist[i]][elementlist[j]]);
+                        for (int k = cha.Count-1; k >= 1; k--)
+                        {
+                            if (Math.Abs(cha.ElementAt(k) - cha.ElementAt(k - 1)) < 0.0001)
+                            {
+                                cha.Remove(cha.ElementAt(k));
+                            }
+                        }
+                        bloads=beamloadsholder[lclist[i]][elementlist[j]];
+                    }
+                    else
+                    {
+                        bloads=new List<double[,]>();
+                    }
+                    effectmatrix=stiffnessmatcalcs.beamdispcalc(bloads,cha,axialforce,axialtrans,bendingtransforce,bendingmoment,rotation,bendingtrans,beamgeom[elementlist[j]-1,4],beamgeom[elementlist[j]-1,5],beamgeom[elementlist[j]-1,0]);
+                    mbdict.Add(elementlist[j],new List<(SortedSet<double>,Matrix<double>)> {(cha,effectmatrix)});
+                    
+                }
+                lcdict.Add(lclist[i],mbdict);
+                
+            }
+            for (int i=0; i < lcombsetactive.Count; i++)
+            {
+                if (stiffnessmatcalcs.lcombcontains(lcdict.Keys.ToList(), combsdict2[lcombsetactive.ElementAt(i)]))
+                {
+                    lcdict.Add(lcombsetactive.ElementAt(i),stiffnessmatcalcs.lcombcreateresultselement(lcdict,combsdict1[lcombsetactive.ElementAt(i)],combsdict2[lcombsetactive.ElementAt(i)]));
+                    lcombsetactive.Remove(lcombsetactive.ElementAt(i));
+                    i=-1;
+                }
+            }
+            if(lcombsetactive.Count>0)
+            {
+                throw new Exception("lcombs referencing case that does not exist");
+            }
+            foreach (int lc in lcdict.Keys.ToImmutableSortedSet())
+            {
+                if (lcdict[lc][elementlist[0]].Count == 1)
+                {
+                    outstring=outstring+"*?*" + 0 +"*!*" +lc+"~"+ elementlist.Count +"*.*";
+                }
+                else
+                {
+                    outstring=outstring+"*?*" + 1 +"*!*" +lc+"~"+ elementlist.Count +"*.*";
+                }
+                for (int j = 0; j < elementlist.Count; j++)
+                {
+                    outstring=outstring+elementlist[j]+"/";
+                    L=beamgeom[elementlist[j]-1,0];
+                    for (int env = 0; env < lcdict[lc][elementlist[j]].Count; env++)
+                    {
+                        effectmatrix=lcdict[lc][elementlist[j]][env].Item2;
+                        cha=lcdict[lc][elementlist[j]][env].Item1;
+                        (cha,effectmatrix)=stiffnessmatcalcs.linearise(effectmatrix,cha);
+                        for (int k = 0; k < effectmatrix.RowCount; k++)
+                        {
+                            outstring=outstring+string.Format("{0:G4}", cha.ElementAt(k))+"|"+string.Format("{0:G4}", cha.ElementAt(k)*L)+"#";
+                            for (int l = 0; l < 3; l++)
+                            {
+                                moveholder=effectmatrix[k,l];
+                                if (Math.Abs(moveholder) < Math.Pow(10, -12))
+                                {
+                                    moveholder=0;
+                                }
+                                outstring=outstring+string.Format("{0:G4}",moveholder)+",";
+                            }
+                            outstring=outstring.Substring(0,outstring.Length-1)+"^";
+                        }
+                        outstring=outstring.Substring(0,outstring.Length-1)+"*(*";
+                    }
+                    outstring=outstring.Substring(0,outstring.Length-1)+";";
+                }
+                outstring=outstring.Substring(0,outstring.Length-1)+":";
+            }
+            outstring=outstring.Substring(0,outstring.Length-1);
+            
+            return outstring;
+        }
+        public static string actionelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        {
+            string outstring="";
+            Matrix<double> effectmatrix;
+            double L;
+            double s;
+            double c;
+            List<double[,]> bloads;
+            SortedSet<double> cha;
+            double axial;
+            double bending;
+            double rotation;
+            int beamcount=beamgeom.GetLength(0);
+            int beamzeroindex=totaldof-beamcount*6;
+            bool isvalid;
+            double moveholder;
+            Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>> lcdict=new Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>>();
+            Dictionary<int,List<(SortedSet<double>,Matrix<double>)>> mbdict;
+            for (int i = 0; i < lclist.Count; i++)
+            {
+                mbdict=new Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>();
+                for (int j = 0; j < elementlist.Count; j++)
+                { 
+                    s=Math.Sin(beamgeom[elementlist[j]-1,3]);
+                    c=Math.Cos(beamgeom[elementlist[j]-1,3]);
+                    axial=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*s;
+                    bending=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*c;
+                    rotation=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,1];
+                    isvalid=false;
+                    if (beamloadsholder.ContainsKey(lclist[i]))
+                    {
+                        if (beamloadsholder[lclist[i]].ContainsKey(elementlist[j]))
+                        {
+                            isvalid=true;
+                        }
+                    }
+                    if (isvalid)
+                    {
+                        cha=beamchapoints[lclist[i]][elementlist[j]];
+                        bloads=beamloadsholder[lclist[i]][elementlist[j]];
+                        effectmatrix=stiffnessmatcalcs.beamactioncalc(bloads,cha,axial,bending,rotation,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]);
+
+                    }
+                    else
+                    {
+                        cha=new SortedSet<double> {0,1};
+                        effectmatrix=Matrix<double>.Build.DenseOfArray(new double[,] {{-axial,bending,-rotation},{-axial,bending,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]}});
+                    }
+                    mbdict.Add(elementlist[j],new List<(SortedSet<double>,Matrix<double>)> {(cha,effectmatrix)});
+                    
+                }
+                lcdict.Add(lclist[i],mbdict);
+                
+            }
+            for (int i=0; i < lcombsetactive.Count; i++)
+            {
+                if (stiffnessmatcalcs.lcombcontains(lcdict.Keys.ToList(), combsdict2[lcombsetactive.ElementAt(i)]))
+                {
+                    lcdict.Add(lcombsetactive.ElementAt(i),stiffnessmatcalcs.lcombcreateresultselement(lcdict,combsdict1[lcombsetactive.ElementAt(i)],combsdict2[lcombsetactive.ElementAt(i)]));
+                    lcombsetactive.Remove(lcombsetactive.ElementAt(i));
+                    i=-1;
+                }
+            }
+            if(lcombsetactive.Count>0)
+            {
+                throw new Exception("lcombs referencing case that does not exist");
+            }
+            foreach (int lc in lcdict.Keys.ToImmutableSortedSet())
+            {
+                if (lcdict[lc][elementlist[0]].Count == 1)
+                {
+                    outstring=outstring+"*?*" + 0 +"*!*" +lc+"~"+ elementlist.Count +"*.*";
+                }
+                else
+                {
+                    outstring=outstring+"*?*" + 1 +"*!*" +lc+"~"+ elementlist.Count +"*.*";
+                }
+                for (int j = 0; j < elementlist.Count; j++)
+                {
+                    outstring=outstring+elementlist[j]+"/";
+                    L=beamgeom[elementlist[j]-1,0];
+                    for (int env = 0; env < lcdict[lc][elementlist[j]].Count; env++)
+                    {
+                        effectmatrix=lcdict[lc][elementlist[j]][env].Item2;
+                        cha=lcdict[lc][elementlist[j]][env].Item1;
+                        (cha,effectmatrix)=stiffnessmatcalcs.linearise(effectmatrix,cha);
+                        for (int k = 0; k < effectmatrix.RowCount; k++)
+                        {
+                            outstring=outstring+string.Format("{0:G4}", cha.ElementAt(k))+"|"+string.Format("{0:G4}", cha.ElementAt(k)*L)+"#";
+                            for (int l = 0; l < 3; l++)
+                            {
+                                moveholder=effectmatrix[k,l];
+                                if (Math.Abs(moveholder) < Math.Pow(10, -12))
+                                {
+                                    moveholder=0;
+                                }
+                                outstring=outstring+string.Format("{0:G4}",moveholder)+",";
+                            }
+                            outstring=outstring.Substring(0,outstring.Length-1)+"^";
+                        }
+                        outstring=outstring.Substring(0,outstring.Length-1)+"*(*";
+                    }
+                    outstring=outstring.Substring(0,outstring.Length-1)+";";
+                }
+                outstring=outstring.Substring(0,outstring.Length-1)+":";
+            }
+            outstring=outstring.Substring(0,outstring.Length-1);
+            
+            return outstring;
+        }
+        public static bool lcombcontains(List<int> lst, List<double[]> dct)
+        {
+            List<double> dctlst=Matrix<double>.Build.DenseOfRowArrays(dct).Column(0).ToList();
+            for(int i = 0; i < dctlst.Count; i++)
+            {
+                if (!lst.Contains(Convert.ToInt32(dctlst[i])))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public static List<double> lcombcreateresultsnode( Dictionary<int,List<double>> lcdict,List<object> combs1,List<double[]> combs2,int unitcount)
+        {
+            bool isenvelope=false;
+            Matrix<double> resultsmatrix;
+            List<double> outlist;
+            int indx;
+            for(int i = 0; i < combs2.Count; i++)
+            {
+                if (lcdict[(int)combs2[i][0]].Count > unitcount)
+                {
+                    isenvelope=true;
+                }
+            }
+            if (isenvelope)
+            {
+                if (lcdict[(int)combs2[0][0]].Count <= unitcount)
+                {
+                    resultsmatrix=Matrix<double>.Build.DenseOfRowMajor(1,unitcount,lcdict[(int)combs2[0][0]]);
+                    for(int i = 0; i < 5; i++)
+                    {
+                        resultsmatrix=resultsmatrix.Append(Matrix<double>.Build.DenseOfRowMajor(1,unitcount,lcdict[(int)combs2[0][0]]));
+                    }
+                    
+                }
+                else
+                {
+                    resultsmatrix=Matrix<double>.Build.DenseOfRowMajor(1,unitcount*6,lcdict[(int)combs2[0][0]]);
+                }
+                Matrix<double> tempmatrix;
+                for(int i = 1; i < combs2.Count; i++)
+                {
+                    if (lcdict[(int)combs2[i][0]].Count <= unitcount)
+                    {
+                        tempmatrix=Matrix<double>.Build.DenseOfRowMajor(1,unitcount,lcdict[(int)combs2[i][0]]);
+                        for(int j = 0; j < 5; j++)
+                        {
+                            tempmatrix=tempmatrix.Append(Matrix<double>.Build.DenseOfRowMajor(1,unitcount,lcdict[(int)combs2[i][0]]));
+                        }
+                        
+                    }
+                    else
+                    {
+                        tempmatrix=Matrix<double>.Build.DenseOfRowMajor(1,unitcount*6,lcdict[(int)combs2[i][0]]);
+                    }
+                    resultsmatrix=resultsmatrix.Stack(combs2[i][1]*tempmatrix);
+                }
+                if ((Convert.ToString(combs1[0]) ?? "").ToLower() == "add")
+                {
+                    outlist=resultsmatrix.ColumnSums().ToList();
+                }
+                else
+                {
+                    outlist=new List<double>();
+                    for (int i = 0; i < 3; i++)
+                    {
+                        foreach(string maxmin in new List<string>() {"max","min"})
+                        {
+                            for (int j = 0; j < unitcount / 3; j++)
+                            {
+                                if (maxmin == "max")
+                                {
+                                    indx=resultsmatrix.Column(3*j+i+2*unitcount*i).MaximumIndex();
+                                    outlist.Add(resultsmatrix[indx,3*j+2*unitcount*i]);
+                                    outlist.Add(resultsmatrix[indx,3*j+2*unitcount*i+1]);
+                                    outlist.Add(resultsmatrix[indx,3*j+2*unitcount*i+2]);
+                                }
+                                else
+                                {
+                                    indx=resultsmatrix.Column(3*j+i+unitcount+2*unitcount*i).MinimumIndex();
+                                    outlist.Add(resultsmatrix[indx,3*j+2*unitcount*i+unitcount]);
+                                    outlist.Add(resultsmatrix[indx,3*j+2*unitcount*i+1+unitcount]);
+                                    outlist.Add(resultsmatrix[indx,3*j+2*unitcount*i+2+unitcount]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                resultsmatrix=Matrix<double>.Build.DenseOfRowMajor(1,unitcount,lcdict[(int)combs2[0][0]]);
+                for(int i = 1; i < combs2.Count; i++)
+                {
+                    resultsmatrix=resultsmatrix.InsertRow(resultsmatrix.RowCount,combs2[i][1]*Vector<double>.Build.DenseOfEnumerable(lcdict[(int)combs2[i][0]]));
+                }
+                if ((Convert.ToString(combs1[0]) ?? "").ToLower() == "add")
+                {
+                    outlist=resultsmatrix.ColumnSums().ToList();
+                }
+                else
+                {
+                    outlist=new List<double>();
+                    for (int i = 0; i < 3; i++)
+                    {
+                        foreach(string maxmin in new List<string>() {"max","min"})
+                        {
+                            for (int j = 0; j < unitcount / 3; j++)
+                            {
+                                if (maxmin == "max")
+                                {
+                                    indx=resultsmatrix.Column(3*j+i).MaximumIndex();
+                                }
+                                else
+                                {
+                                    indx=resultsmatrix.Column(3*j+i).MinimumIndex();
+                                }
+                                outlist.Add(resultsmatrix[indx,3*j]);
+                                outlist.Add(resultsmatrix[indx,3*j+1]);
+                                outlist.Add(resultsmatrix[indx,3*j+2]);
+                            }
+                            
+                        }
+                    }
+                }
+            }
+            return outlist;
+        }
+        public static Dictionary<int,List<(SortedSet<double>,Matrix<double>)>> lcombcreateresultselement( Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>> lcdict,List<object> combs1,List<double[]> combs2)
+        {
+            bool isenvelope=false;
+            Dictionary<int,List<(SortedSet<double>,Matrix<double>)>> outdict= new Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>();
+            SortedSet<double> chamaster;
+            List<List<Matrix<double>>> interpmats;
+            List<Matrix<double>> rtrnholder;
+            Matrix<double> tempmat;
+            Matrix<double> comparemat;
+            List<(SortedSet<double>,Matrix<double>)> templist;
+            foreach (int mb in lcdict[(lcdict.Keys).ElementAt(0)].Keys)
+            {
+                for(int i = 0; i < combs2.Count; i++)
+                {
+                    if (lcdict[(int)combs2[i][0]][mb].Count() > 1)
+                    {
+                        isenvelope=true;
+                    }
+                }
+                chamaster=new SortedSet<double>();
+                interpmats = new  List<List<Matrix<double>>>();
+                for(int i = 0; i < combs2.Count; i++)
+                {
+                    chamaster.UnionWith(lcdict[(int)combs2[i][0]][mb][0].Item1);
+                }
+                for(int i = 0; i < combs2.Count; i++)
+                {
+                    rtrnholder=stiffnessmatcalcs.intermediates(chamaster,lcdict[(int)combs2[i][0]][mb],combs2[i][1]);
+                    interpmats.Add(rtrnholder);
+                }
+                if ((Convert.ToString(combs1[0]) ?? "").ToLower() != "add")
+                {
+                    templist= new List<(SortedSet<double>,Matrix<double>)>();
+                    for (int resultcol = 0; resultcol < 3; resultcol++)
+                    {
+                        for (int maxmin = 0; maxmin < 2; maxmin++)
+                        {
+                            tempmat=interpmats[0][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)];
+                            for (int cse = 1; cse < interpmats.Count; cse++)
+                            {
+                                comparemat=interpmats[cse][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)];
+                                for (int matrw = 0; matrw < tempmat.RowCount; matrw++)
+                                {
+                                    if (maxmin == 0)
+                                    {
+                                        if (comparemat[matrw, resultcol] > tempmat[matrw, resultcol])
+                                        {
+                                            tempmat[matrw, 0]=comparemat[matrw, 0];
+                                            tempmat[matrw, 1]=comparemat[matrw, 1];
+                                            tempmat[matrw, 2]=comparemat[matrw, 2];
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (comparemat[matrw, resultcol] < tempmat[matrw, resultcol])
+                                        {
+                                            tempmat[matrw, 0]=comparemat[matrw, 0];
+                                            tempmat[matrw, 1]=comparemat[matrw, 1];
+                                            tempmat[matrw, 2]=comparemat[matrw, 2];  
+                                        } 
+                                    }
+                                }
+                            }
+                            templist.Add((chamaster,tempmat));
+                        }
+                    }
+                    outdict.Add(mb,templist);
+                }
+                else
+                {
+                    if (isenvelope)
+                    {
+                        templist= new List<(SortedSet<double>,Matrix<double>)>();
+                        for (int j = 0; j < 6; j++)
+                        {
+                            tempmat=Matrix<double>.Build.Dense(chamaster.Count*3,0);
+                            for(int i = 0; i < interpmats.Count; i++)
+                            {
+                                tempmat=tempmat.Append(Matrix<double>.Build.DenseOfColumnArrays(interpmats[i][Math.Min(j,interpmats[i].Count-1)].ToColumnMajorArray()));
+                            }
+                            tempmat=Matrix<double>.Build.DenseOfRowMajor(chamaster.Count(), 3, tempmat.RowSums());
+                            templist.Add((chamaster,tempmat));
+                        }
+                        outdict.Add(mb,templist);
+                    }
+                    else
+                    {
+                        tempmat=Matrix<double>.Build.Dense(chamaster.Count*3,0);
+                        for(int i = 0; i < interpmats.Count; i++)
+                        {
+                            tempmat=tempmat.Append(Matrix<double>.Build.DenseOfColumnArrays(interpmats[i][0].ToColumnMajorArray()));
+                        }
+                        tempmat=Matrix<double>.Build.DenseOfRowMajor(chamaster.Count(), 3, tempmat.RowSums());
+                        outdict.Add(mb,new List<(SortedSet<double>,Matrix<double>)>() {(chamaster,tempmat)});
+
+                    }
+                }
+                
+            }
+            
+            return outdict;
+        }
+        public static List<Matrix<double>> intermediates(SortedSet<double> chamaster,List<(SortedSet<double>,Matrix<double>)> bse,double scal)
+        {
+            List<Matrix<double>> outlist=new List<Matrix<double>>();
+            Matrix<double> resultsmatrix;
+            SortedSet<double> cha;
+            int crrent;
+            Matrix<double> tempmat;
+            double pcnt;
+            Vector<double> tempvec;
+            for (int i = 0; i < bse.Count(); i++)
+            {
+                (cha,resultsmatrix)=bse[i];
+                crrent=0;
+                tempmat=Matrix<double>.Build.Dense(1,3);
+                for (int j = 0; j < chamaster.Count(); j++)
+                {
+                    while (!(cha.ElementAt(crrent)<=chamaster.ElementAt(j) && cha.ElementAt(crrent+1)>=chamaster.ElementAt(j))){crrent++;}
+                    pcnt=(chamaster.ElementAt(j)-cha.ElementAt(crrent))/(cha.ElementAt(crrent+1)-cha.ElementAt(crrent));
+                    tempvec=Vector<double>.Build.Dense(3);
+                    for (int k = 0; k < 3; k++)
+                    {
+                        tempvec[k]=scal*(resultsmatrix[crrent,k]+pcnt*(resultsmatrix[crrent+1,k]-resultsmatrix[crrent,k]));
+                    }
+                    tempmat.InsertRow(tempmat.RowCount,tempvec);
+                }
+                tempmat.RemoveRow(0);
+                outlist.Add(tempmat);
+            }
+            return outlist;
         }
     }
     class fixedendcreator
