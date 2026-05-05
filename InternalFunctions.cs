@@ -3086,6 +3086,7 @@ namespace TESTEXDNA
             int actionsdisplacements;
             int nodeselements;
             object[,] tabholder=tabularise(results,requests,nodes,elements,loads,bloads);
+            
             if ((String)requests[0, 5] == "Actions")
             {
                 actionsdisplacements=0;
@@ -3106,26 +3107,52 @@ namespace TESTEXDNA
             {
                 nodeselements=1;
             }
+            int colnum=tabholder.GetLength(1);
+            List<int> validlist= new List<int>() {0};
+            object[,]tabholder2;
+            if (actionsdisplacements != 4)
+            {
+                for (int i = 1; i < tabholder.GetLength(0); i++)
+                {
+                    if ((string)tabholder[i, colnum-2] == "" ||(string)tabholder[i, colnum-2] == dirn)
+                    {
+                        validlist.Add(i);
+                    }
+                }
+                tabholder2=new object[validlist.Count,colnum];
+                for (int i = 0; i < validlist.Count; i++)
+                {
+                    for (int j = 0; j < colnum; j++)
+                    {
+                        tabholder2[i,j]=tabholder[validlist[i],j];
+                    }
+                }
+            }
+            else
+            {
+                tabholder2=(object[,])tabholder.Clone();
+            }
+
             object[,] outholder=new object[0,0];
             switch (actionsdisplacements + nodeselements)
             {
                 case 0:
-                    outholder=graphingtablefunctions.graphnodeactions(nodes, tabholder,scale,graphrange);
+                    outholder=graphingtablefunctions.graphnodeactions(nodes, tabholder2,scale,graphrange);
                     break;
                 case 1:
-                    outholder=graphingtablefunctions.graphelementactions(nodes,elements, tabholder,dirnindex,scale,graphrange); 
+                    outholder=graphingtablefunctions.graphelementactions(nodes,elements, tabholder2,dirnindex,scale,graphrange); 
                     break;
                 case 2:
-                    outholder=graphingtablefunctions.graphnodedisplacements(nodes, tabholder,scale);
+                    outholder=graphingtablefunctions.graphnodedisplacements(nodes, tabholder2,scale);
                     break;
                 case 3:
-                    outholder=graphingtablefunctions.graphelementdisplacements(nodes,elements, tabholder,scale);
+                    outholder=graphingtablefunctions.graphelementdisplacements(nodes,elements, tabholder2,scale);
                     break;
                 case 4:
-                    outholder=graphingtablefunctions.graphnodeloads(nodes, tabholder,scale,graphrange);
+                    outholder=graphingtablefunctions.graphnodeloads(nodes, tabholder2,scale,graphrange);
                     break;
                 case 5:
-                    outholder=graphingtablefunctions.graphelementloads(nodes,elements, tabholder,dirnindex,scale,graphrange); 
+                    outholder=graphingtablefunctions.graphelementloads(nodes,elements, tabholder2,dirnindex,scale,graphrange); 
                     break;
             }
             return outholder;
@@ -3279,6 +3306,7 @@ namespace TESTEXDNA
             double effectmag;
             double netscale;
             double chapercent;
+            int tabcols=tabularised.GetLength(1);
             for (int i = 1; i < tabularised.GetLength(0); i++)
             {
                 maxmag=Math.Max(Math.Abs((double)tabularised[i,4+dirnindex]),maxmag);
@@ -3301,6 +3329,12 @@ namespace TESTEXDNA
                 outholder.Add(new object[] {elementx1,elementy1});
                 while ((int)tabularised[tabiter, 1] == i + 1)
                 {
+                    if ((string)tabularised[tabiter,tabcols-1]!=(string)tabularised[tabiter-1,tabcols-1]! && tabiter != 1)
+                    {
+                        outholder.Add(new object[] {elementx2,elementy2});
+                        outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+                        outholder.Add(new object[] {elementx1,elementy1});
+                    }
                     effectmag=(double)tabularised[tabiter,4+dirnindex];
                     if (dirnindex == 2)
                     {
@@ -3339,7 +3373,7 @@ namespace TESTEXDNA
             double effectmagy;
             double netscale;
             double chapercent;
-            
+            int tabcols=tabularised.GetLength(1);            
             netscale=scale;
             int tabiter=1;
             for (int i = 0; i < elements.GetLength(0); i++)
@@ -3353,6 +3387,12 @@ namespace TESTEXDNA
                 yvec=(elementy2-elementy1)/magn;
                 while ((int)tabularised[tabiter, 1] == i + 1)
                 {
+                    if ((string)tabularised[tabiter,tabcols-1]!=(string)tabularised[tabiter-1,tabcols-1]! && tabiter != 1)
+                    {
+
+                        outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
+
+                    }
                     effectmagx=(double)tabularised[tabiter,4]*xvec-(double)tabularised[tabiter,5]*yvec;
                     effectmagy=(double)tabularised[tabiter,4]*yvec+(double)tabularised[tabiter,5]*xvec;
                     chapercent=(double)tabularised[tabiter,2];
