@@ -106,7 +106,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       offs=offs+5;
 
       string[] combination1 = new string[] { "Combination Load Case Number", "Add Cases / Envelope Cases", "Case Descriptor"};
-      object[] combination2 = new object[] { 4, "Add", "1*LC1+2*LC3"};
+      object[] combination2 = new object[] { 4, "Add", "1*LC1,2*LC3"};
       createinputblock(xlApp, wb, ws, cell, offs, "Combination Case Inputs", combination1, 1, combination2);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 1].validation.add(3, 3, 3, "Add,Envelope", 0);

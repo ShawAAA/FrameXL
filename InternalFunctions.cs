@@ -877,7 +877,7 @@ namespace TESTEXDNA
             {
                 if ((string)combsdict1[key][0] == "Add")
                 {
-                    holder=stiffnessmatcalcs.lcombaddconvert((string)combsdict1[key][1]);
+                    holder=stiffnessmatcalcs.lcombenvconvert((string)combsdict1[key][1]);
                 }
                 else
                 {
