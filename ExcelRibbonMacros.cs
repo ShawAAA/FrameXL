@@ -105,13 +105,11 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 7].numberformat="0.00%";
       offs=offs+5;
 
-      string[] combination1 = new string[] { "Combination Load Case Number", "Add Cases / Envelope Cases", "Case Descriptor","Enveloped effect direction (for envelope)"};
+      string[] combination1 = new string[] { "Combination Load Case Number", "Add Cases / Envelope Cases", "Case Descriptor"};
       object[] combination2 = new object[] { 4, "Add", "1*LC1+2*LC3"};
       createinputblock(xlApp, wb, ws, cell, offs, "Combination Case Inputs", combination1, 1, combination2);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 3].validation.add(3, 3, 3, "x,y,zz", 0);
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 3].validation.add(3, 3, 3, "x,y,zz", 0);
       offs=offs+5;
 
       if ((string)tg == "text")
@@ -129,7 +127,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         offs=offs+5;
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
       
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysis(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,4).address+","+ xlApp.range(cell).offset(offs-3, 0).resize(2,4).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysis(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+","+ xlApp.range(cell).offset(offs-3, 0).resize(2,4).address+ "))";
       }
       else if ((string)tg == "simple")
       {
@@ -153,7 +151,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         string requestsaddress=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 0].address;
         offs=offs+4;
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,4).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+ "))";
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].resize(5,6).HorizontalAlignment=5;
         string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].address();
         offs=offs+5;

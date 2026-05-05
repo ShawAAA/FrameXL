@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TESTEXDNA")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+59cedfe753306c34eece43a09e2bc69d958515ff")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+97bb09a7a1ce8cdf6760f6178bc5b4c715243d9a")]
 [assembly: System.Reflection.AssemblyProductAttribute("TESTEXDNA")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TESTEXDNA")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

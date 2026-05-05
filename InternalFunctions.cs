@@ -175,13 +175,13 @@ namespace TESTEXDNA
 
                                 break;
                             case 1:
-                                if (vecangle==0 || vecangle == Math.PI)
+                                if (Math.Abs(vecangle) < 1e-10 || Math.Abs(vecangle - Math.PI) < 1e-10)
                                 {
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol]=1;
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,(nodenumber-1)*3+1]=1;                                   
 
                                 }
-                                else if(vecangle==Math.PI/2 || vecangle == Math.PI * 1.5)
+                                else if(Math.Abs(vecangle-Math.PI/2)<1e-10 || Math.Abs(vecangle - Math.PI * 1.5)<1e-10)
                                 {
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3]=1;
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol+1]=1;
@@ -196,14 +196,14 @@ namespace TESTEXDNA
                                 }
                                 break;    
                             case 2:
-                                if (vecangle==0 || vecangle == Math.PI)
+                                if (Math.Abs(vecangle) < 1e-10 || Math.Abs(vecangle - Math.PI) < 1e-10)
                                 {
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3]=1;
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol+1]=1;
                                                                      
 
                                 }
-                                else if(vecangle==Math.PI/2 || vecangle == Math.PI * 1.5)
+                                else if(Math.Abs(vecangle-Math.PI/2)<1e-10 || Math.Abs(vecangle - Math.PI * 1.5)<1e-10)
                                 {
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol]=1;
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,(nodenumber-1)*3+1]=1;  
@@ -501,6 +501,8 @@ namespace TESTEXDNA
                     loadholder.Add((int)tbloads[i, 0],new Dictionary<int,List<double[,]>> {{(int)tbloads[i, 1],new List<double[,]> {beamarray}}});
                 }
             }
+            tbloadsmat.Clear();
+            beamgeommat.Clear();
             return loadholder;
         }
         public static double[,] beamloadconverted(double[] bloadsrow,double[] beamgeomrow)
@@ -518,8 +520,11 @@ namespace TESTEXDNA
             }
             if (bloadsrow[3] == 2)
             {
-                
-                if (bloadsrow[4] == 0)
+                if (beamgeomrow[0]==0)
+                {
+                    projectionscalar=1;
+                }
+                else if (bloadsrow[4] == 0)
                 {
                     projectionscalar=Math.Abs(beamgeomrow[2]/beamgeomrow[0]);
                 }
@@ -528,7 +533,7 @@ namespace TESTEXDNA
                     projectionscalar=Math.Abs(beamgeomrow[1]/beamgeomrow[0]);
                 }
             }
-            if (bloadsrow[3]==0 || beamgeomrow[3] % (Math.PI / 2) == 0)
+            if (bloadsrow[3]==0 || Math.Abs(beamgeomrow[3] % (Math.PI / 2)) < 1e-10)
             {
                 int effectivedirn;
                 if (bloadsrow[3] == 0)
@@ -541,7 +546,7 @@ namespace TESTEXDNA
                     effectivedirn=(int)((Math.Abs(2*((beamgeomrow[3]/Math.PI) % 1))+bloadsrow[4]) % 2);
                     if (bloadsrow[4] == 0)
                     {
-                        if (beamgeomrow[3]==0 || beamgeomrow[3]==-Math.PI/2 || beamgeomrow[3] == 3 * Math.PI / 2)
+                        if (Math.Abs(beamgeomrow[3])<1e-10 || Math.Abs(beamgeomrow[3]+Math.PI/2)<1e-10 || Math.Abs(beamgeomrow[3] - 3 * Math.PI / 2)<1e-10)
                         {
                             scle=1;
                         }
@@ -552,7 +557,7 @@ namespace TESTEXDNA
                     }
                     else
                     {
-                        if (beamgeomrow[3]==0 || beamgeomrow[3]==Math.PI/2)
+                        if (Math.Abs(beamgeomrow[3])<1e-10 || Math.Abs(beamgeomrow[3]-Math.PI/2)<1e-10 || Math.Abs(beamgeomrow[3] + 3 * Math.PI / 2)<1e-10)
                         {
                             scle=1;
                         }
@@ -780,7 +785,7 @@ namespace TESTEXDNA
             Dictionary<int,List<object>> combsdict1= new Dictionary<int,List<object>>();
             for (int i=0; i < tlcomb.GetLength(0); i++)
             {
-                combsdict1.Add(Convert.ToInt32(tlcomb[i,0]),new List<object> {tlcomb[i,1],tlcomb[i,2],tlcomb[i,3]});
+                combsdict1.Add(Convert.ToInt32(tlcomb[i,0]),new List<object> {tlcomb[i,1],tlcomb[i,2]});
             }
             Dictionary<int,List<double[]>> combsdict2= stiffnessmatcalcs.lcombcaseconverter(combsdict1);
             for (int i=0; i < extracts.GetLength(0); i++)
@@ -1207,6 +1212,7 @@ namespace TESTEXDNA
         public static (SortedSet<double>,Matrix<double>) linearise(Matrix<double> inmatrix,  SortedSet<double> cha)
         {
             Matrix<double> outmatrix=inmatrix.Clone();
+            SortedSet<double> outcha=new SortedSet<double>(cha);
             bool isreduceable;
             double prediction;
             for (int i=1; i < outmatrix.RowCount - 1; i++)
@@ -1214,7 +1220,7 @@ namespace TESTEXDNA
                 isreduceable=true;
                 for(int j = 0; j < outmatrix.ColumnCount; j++)
                 {
-                    prediction=outmatrix[i-1,j]+(outmatrix[i+1,j]-outmatrix[i-1,j])*(cha.ElementAt(i)-cha.ElementAt(i-1))/(cha.ElementAt(i+1)-cha.ElementAt(i-1));
+                    prediction=outmatrix[i-1,j]+(outmatrix[i+1,j]-outmatrix[i-1,j])*(outcha.ElementAt(i)-outcha.ElementAt(i-1))/(outcha.ElementAt(i+1)-outcha.ElementAt(i-1));
                     if (outmatrix[i, j] == 0 && Math.Abs(prediction-outmatrix[i, j])>Math.Max(Math.Abs(outmatrix[i-1,j]),Math.Abs(outmatrix[i+1,j])*0.01))
                     {
                         isreduceable=false;
@@ -1229,11 +1235,11 @@ namespace TESTEXDNA
                 if (isreduceable)
                 {
                     outmatrix=outmatrix.RemoveRow(i);
-                    cha.Remove(cha.ElementAt(i));
+                    outcha.Remove(outcha.ElementAt(i));
                     i=0;
                 }
             }
-            return (cha,outmatrix);
+            return (new SortedSet<double>(outcha),outmatrix.Clone());
         }
         public static Matrix<double> beamactioncalc(List<double[,]> beamloads, SortedSet<double> chapoints, double axial,double bending,double rotation,double rotation2)
         {
@@ -1263,7 +1269,7 @@ namespace TESTEXDNA
                             holder=elementactionsdisps.bendingmomentactionsdisps(beamloads[i],j,0,chapoints);
                             break;
                     }
-                    effectsholder=effectsholder.Add(holder);
+                    effectsholder=effectsholder.Add(holder.Clone());
                     
                 }
             }
@@ -1302,8 +1308,7 @@ namespace TESTEXDNA
                             holder=elementactionsdisps.bendingmomentactionsdisps(beamloads[i],j,1,chapoints,EI);
                             break;
                     }
-                    effectsholder=effectsholder.Add(holder);
-                    holder=M.Dense(chapoints.Count,3);
+                    effectsholder=effectsholder.Add(holder.Clone());
                     
                 }
             }
@@ -1311,9 +1316,10 @@ namespace TESTEXDNA
 
             return effectsholder;
         }
-        public static string actionnodesrebuild(Dictionary<int,Matrix<double>> resultsholder2,Dictionary<int,List<Vector<double>>> fextholder,List<int> lclist, List<int> nodelist,List<int> springmap,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        public static string actionnodesrebuild(Dictionary<int,Matrix<double>> resultsholder2,Dictionary<int,List<Vector<double>>> fextholder,List<int> lclist, List<int> nodelist,List<int> springmap,SortedSet<int> lcombset,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
         {
             string outstring="";
+            SortedSet<int> lcombsetactive=new SortedSet<int>(lcombset);
             double reacholder;
             int currnode;
             int mappedindex;
@@ -1362,7 +1368,7 @@ namespace TESTEXDNA
                         outstring= outstring+nodelist[i]+"/";
                         for(int j = 0; j < 3; j++)
                         {
-                            outstring= outstring+lcdict[lc][i*3+j] + ",";
+                            outstring= outstring+string.Format("{0:G4}", lcdict[lc][i*3+j]) + ",";
                         }
                         outstring= outstring.Substring(0, outstring.Length-1)+";";
                     }
@@ -1370,29 +1376,30 @@ namespace TESTEXDNA
                 else
                 {
                     outstring=outstring+"*?*" + 1 +"*!*" +lc+"~"+ nodelist.Count +"*.*";
-                    for (int k = 0; k < 6; k++)
+                    for (int i = 0; i < nodelist.Count; i++)
                     {
-                        for (int i = 0; i < nodelist.Count; i++)
+                        outstring= outstring+nodelist[i]+"/";
+                        for (int k = 0; k < 6; k++)
                         {
-                            outstring= outstring+nodelist[i]+"/";
                             for(int j = 0; j < 3; j++)
                             {
-                                outstring= outstring+lcdict[lc][i*3+j+3*k*nodelist.Count] + ",";
+                                outstring= outstring+string.Format("{0:G4}", lcdict[lc][i*3+j+3*k*nodelist.Count]) + ",";
                             }
-                            outstring= outstring.Substring(0, outstring.Length-1)+";";
+                            outstring= outstring.Substring(0, outstring.Length-1)+"*(*";
                         }
+                        outstring= outstring.Substring(0, outstring.Length-3)+";";
                     }
                     
                 }
-                outstring= outstring.Substring(0, outstring.Length-1)+":";
+                outstring= outstring.Substring(0, outstring.Length-1);
                 
             }
-            outstring=outstring.Substring(0,outstring.Length-1);
             return outstring;
         }
-        public static string dispnodesrebuild(Dictionary<int,Matrix<double>> resultsholder,List<int> lclist, List<int> nodelist,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        public static string dispnodesrebuild(Dictionary<int,Matrix<double>> resultsholder,List<int> lclist, List<int> nodelist,SortedSet<int> lcombset,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
         {
             string outstring="";
+            SortedSet<int> lcombsetactive=new SortedSet<int>(lcombset);
             double moveholder;
             int currnode;
             List<double> lcvalues;
@@ -1439,7 +1446,7 @@ namespace TESTEXDNA
                         outstring= outstring+nodelist[i]+"/";
                         for(int j = 0; j < 3; j++)
                         {
-                            outstring= outstring+lcdict[lc][i*3+j] + ",";
+                            outstring=  outstring+string.Format("{0:G4}",lcdict[lc][i*3+j]) + ",";
                         }
                         outstring= outstring.Substring(0, outstring.Length-1)+";";
                     }
@@ -1447,30 +1454,31 @@ namespace TESTEXDNA
                 else
                 {
                     outstring=outstring+"*?*" + 1 +"*!*" +lc+"~"+ nodelist.Count +"*.*";
-                    for (int k = 0; k < 6; k++)
+                    for (int i = 0; i < nodelist.Count; i++)
                     {
-                        for (int i = 0; i < nodelist.Count; i++)
+                        outstring= outstring+nodelist[i]+"/";
+                        for (int k = 0; k < 6; k++)
                         {
-                            outstring= outstring+nodelist[i]+"/";
                             for(int j = 0; j < 3; j++)
                             {
-                                outstring= outstring+lcdict[lc][i*3+j+3*k*nodelist.Count] + ",";
+                                outstring= outstring+string.Format("{0:G4}", lcdict[lc][i*3+j+3*k*nodelist.Count]) + ",";
                             }
-                            outstring= outstring.Substring(0, outstring.Length-1)+";";
+                            outstring= outstring.Substring(0, outstring.Length-1)+"*(*";
                         }
+                        outstring= outstring.Substring(0, outstring.Length-3)+";";
                     }
                     
                 }
-                outstring= outstring.Substring(0, outstring.Length-1)+":";
+                outstring= outstring.Substring(0, outstring.Length-1);
                 
             }
-            outstring=outstring.Substring(0,outstring.Length-1);
             return outstring;
         }
-        public static string dispelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        public static string dispelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombset,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
         {
             string outstring="";
             Matrix<double> effectmatrix;
+            SortedSet<int> lcombsetactive=new SortedSet<int>(lcombset);
             double L;
             double s;
             double c;
@@ -1526,7 +1534,7 @@ namespace TESTEXDNA
                                 cha.Remove(cha.ElementAt(k));
                             }
                         }
-                        bloads=beamloadsholder[lclist[i]][elementlist[j]];
+                        bloads=new List<double[,]>(beamloadsholder[lclist[i]][elementlist[j]]);
                     }
                     else
                     {
@@ -1587,18 +1595,18 @@ namespace TESTEXDNA
                         }
                         outstring=outstring.Substring(0,outstring.Length-1)+"*(*";
                     }
-                    outstring=outstring.Substring(0,outstring.Length-1)+";";
+                    outstring=outstring.Substring(0,outstring.Length-3)+";";
                 }
-                outstring=outstring.Substring(0,outstring.Length-1)+":";
+                outstring=outstring.Substring(0,outstring.Length-1);
             }
-            outstring=outstring.Substring(0,outstring.Length-1);
             
             return outstring;
         }
-        public static string actionelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombsetactive,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
+        public static string actionelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombset,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
         {
             string outstring="";
             Matrix<double> effectmatrix;
+            SortedSet<int> lcombsetactive=new SortedSet<int>(lcombset);
             double L;
             double s;
             double c;
@@ -1633,7 +1641,7 @@ namespace TESTEXDNA
                     }
                     if (isvalid)
                     {
-                        cha=beamchapoints[lclist[i]][elementlist[j]];
+                        cha=new SortedSet<double>(beamchapoints[lclist[i]][elementlist[j]]);
                         bloads=beamloadsholder[lclist[i]][elementlist[j]];
                         effectmatrix=stiffnessmatcalcs.beamactioncalc(bloads,cha,axial,bending,rotation,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]);
 
@@ -1697,12 +1705,10 @@ namespace TESTEXDNA
                         }
                         outstring=outstring.Substring(0,outstring.Length-1)+"*(*";
                     }
-                    outstring=outstring.Substring(0,outstring.Length-1)+";";
+                    outstring=outstring.Substring(0,outstring.Length-3)+";";
                 }
-                outstring=outstring.Substring(0,outstring.Length-1)+":";
+                outstring=outstring.Substring(0,outstring.Length-1);
             }
-            outstring=outstring.Substring(0,outstring.Length-1);
-            
             return outstring;
         }
         public static bool lcombcontains(List<int> lst, List<double[]> dct)
@@ -1871,10 +1877,10 @@ namespace TESTEXDNA
                     {
                         for (int maxmin = 0; maxmin < 2; maxmin++)
                         {
-                            tempmat=interpmats[0][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)];
+                            tempmat=interpmats[0][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)].Clone();
                             for (int cse = 1; cse < interpmats.Count; cse++)
                             {
-                                comparemat=interpmats[cse][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)];
+                                comparemat=interpmats[cse][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)].Clone();
                                 for (int matrw = 0; matrw < tempmat.RowCount; matrw++)
                                 {
                                     if (maxmin == 0)
@@ -1897,7 +1903,7 @@ namespace TESTEXDNA
                                     }
                                 }
                             }
-                            templist.Add((chamaster,tempmat));
+                            templist.Add((new SortedSet<double>(chamaster),tempmat.Clone()));
                         }
                     }
                     outdict.Add(mb,templist);
@@ -1914,7 +1920,7 @@ namespace TESTEXDNA
                             {
                                 tempmat=tempmat.Append(Matrix<double>.Build.DenseOfColumnArrays(interpmats[i][Math.Min(j,interpmats[i].Count-1)].ToColumnMajorArray()));
                             }
-                            tempmat=Matrix<double>.Build.DenseOfRowMajor(chamaster.Count(), 3, tempmat.RowSums());
+                            tempmat=Matrix<double>.Build.DenseOfColumnMajor(chamaster.Count(), 3, tempmat.RowSums());
                             templist.Add((chamaster,tempmat));
                         }
                         outdict.Add(mb,templist);
@@ -1926,7 +1932,7 @@ namespace TESTEXDNA
                         {
                             tempmat=tempmat.Append(Matrix<double>.Build.DenseOfColumnArrays(interpmats[i][0].ToColumnMajorArray()));
                         }
-                        tempmat=Matrix<double>.Build.DenseOfRowMajor(chamaster.Count(), 3, tempmat.RowSums());
+                        tempmat=Matrix<double>.Build.DenseOfColumnMajor(chamaster.Count(), 3, tempmat.RowSums());
                         outdict.Add(mb,new List<(SortedSet<double>,Matrix<double>)>() {(chamaster,tempmat)});
 
                     }
@@ -1959,9 +1965,9 @@ namespace TESTEXDNA
                     {
                         tempvec[k]=scal*(resultsmatrix[crrent,k]+pcnt*(resultsmatrix[crrent+1,k]-resultsmatrix[crrent,k]));
                     }
-                    tempmat.InsertRow(tempmat.RowCount,tempvec);
+                    tempmat=tempmat.InsertRow(tempmat.RowCount,tempvec);
                 }
-                tempmat.RemoveRow(0);
+                tempmat=tempmat.RemoveRow(0);
                 outlist.Add(tempmat);
             }
             return outlist;
@@ -3611,19 +3617,19 @@ namespace TESTEXDNA
             switch (actionsdisplacements + nodeselements)
             {
                 case 0:
-                    outlist.Add(new object[] {"Load Case", "Node Index","x Reaction (N)","y Reaction (N)","zz Reaction (Nm)"});
+                    outlist.Add(new object[] {"Load Case", "Node Index","x Reaction (N)","y Reaction (N)","zz Reaction (Nm)","Permutation Direction","Permutation Max/Min"});
                     outlist.AddRange(noderead(lcmemberstext));
                     break;
                 case 1:
-                    outlist.Add(new object[] {"Load Case", "Node Index","x Displacement (m)","y Displacement (m)","zz rotation (rad)"});
+                    outlist.Add(new object[] {"Load Case", "Node Index","x Displacement (m)","y Displacement (m)","zz rotation (rad)","Permutation Direction","Permutation Max/Min"});
                     outlist.AddRange(noderead(lcmemberstext));
                     break;
                 case 2:
-                    outlist.Add(new object[] {"Load Case", "Element Index","Element Cha (%)","Element Cha (m)","Axial Force (N)","Shear Force (N)","Bending Moment (Nm)"});
+                    outlist.Add(new object[] {"Load Case", "Element Index","Element Cha (%)","Element Cha (m)","Axial Force (N)","Shear Force (N)","Bending Moment (Nm)","Permutation Direction","Permutation Max/Min"});
                     outlist.AddRange(elementread(lcmemberstext));
                     break;
                 case 3:
-                    outlist.Add(new object[] {"Load Case", "Element Index","Element Cha (%)","Element Cha (m)","Axial displacement (m)","Shear displacement (m))","Rotation (rad)"});
+                    outlist.Add(new object[] {"Load Case", "Element Index","Element Cha (%)","Element Cha (m)","Axial displacement (m)","Shear displacement (m))","Rotation (rad)","Permutation Direction","Permutation Max/Min"});
                     outlist.AddRange(elementread(lcmemberstext));
                     break;
             }
@@ -3646,20 +3652,46 @@ namespace TESTEXDNA
             {
                 txtholder=txtholder+results[index,i];
             }
-            txtholder=txtholder.Split("$")[1];
+            txtholder=txtholder.Split("*?*",2)[1];
             List<object[]> outlist=new List<object[]>();
-            string[] LC=txtholder.Split(":");
+            string[] LC=txtholder.Split("*?*");
+            string lcval;
+            string isenv;
+            string nmbr;
+            string[] pttion;
+            string[] pttion2;
+            string[] pttion3;
             string[] member;
             object[] outrow;
             string[] lcandmemberandresults;
+            string[] envresults;
             for (int i = 0; i < LC.GetLength(0); i++)
             {
-                member=LC[i].Split(";");
+                pttion=LC[i].Split("*.*");
+                pttion2=pttion[0].Split("*!*");
+                isenv=pttion2[0];
+                pttion3=pttion2[1].Split("~");
+                lcval=pttion3[0];
+                nmbr=pttion3[1];
+                member=pttion[1].Split(";");
                 for (int j = 0; j < member.GetLength(0); j++)
                 {
                     lcandmemberandresults=member[j].Split("/");
-                    outrow= new object[] {lcandmemberandresults[0].Split("~")[0],lcandmemberandresults[0].Split("~")[1],lcandmemberandresults[1]};
-                    outlist.Add(outrow);
+                    if (isenv=="1")
+                    {
+                        envresults=lcandmemberandresults[1].Split("*(*");
+                        for (int k = 0; k < envresults.GetLength(0); k++)
+                        {
+                            outrow= new object[] {(string)lcval,lcandmemberandresults[0],envresults[k],k+1};
+                            outlist.Add(outrow);
+                        }
+                    }
+                    else
+                    {
+                        outrow= new object[] {(string)lcval,lcandmemberandresults[0],lcandmemberandresults[1],0};
+                        outlist.Add(outrow);                        
+                    }
+
                 }
             }
             return outlist;
@@ -3668,11 +3700,48 @@ namespace TESTEXDNA
         {
             object[] rw;
             string[] txtsplittemp;
+            string permdirn;
+            string permmaxmin;
             List<object[]> outlist= new List<object[]>();
             for (int i = 0; i < lcmemberstext.Count; i++)
             {
+                switch ((int)lcmemberstext[i][3])
+                {
+                    case 0:
+                        permdirn="";
+                        permmaxmin="";
+                        break;
+                    case 1:
+                        permdirn="x";
+                        permmaxmin="max";
+                        break;
+                    case 2:
+                        permdirn="x";
+                        permmaxmin="min";
+                        break;
+                    case 3:
+                        permdirn="y";
+                        permmaxmin="max";
+                        break;
+                    case 4:
+                        permdirn="y";
+                        permmaxmin="min";
+                        break;
+                    case 5:
+                        permdirn="zz";
+                        permmaxmin="max";
+                        break;
+                    case 6:
+                        permdirn="zz";
+                        permmaxmin="min";
+                        break;
+                    default:
+                        permdirn="";
+                        permmaxmin="";
+                        break;
+                }
                 txtsplittemp=((String)lcmemberstext[i][2]).Split(",");
-                rw= new object[] {int.Parse((String)lcmemberstext[i][0]),int.Parse((String)lcmemberstext[i][1]),double.Parse((String)txtsplittemp[0]),double.Parse((String)txtsplittemp[1]),double.Parse((String)txtsplittemp[2])};
+                rw= new object[] {int.Parse((String)lcmemberstext[i][0]),int.Parse((String)lcmemberstext[i][1]),double.Parse((String)txtsplittemp[0]),double.Parse((String)txtsplittemp[1]),double.Parse((String)txtsplittemp[2]),permdirn,permmaxmin};
                 outlist.Add(rw);
             }
             return outlist;
@@ -3684,17 +3753,53 @@ namespace TESTEXDNA
             string[] txtsplittemp2;
             string[] txtsplittemp3;
             string[] txtsplittemp4;
-
+            string permdirn;
+            string permmaxmin;
             List<object[]> outlist= new List<object[]>();
             for (int i = 0; i < lcmemberstext.Count; i++)
             {
+                switch ((int)lcmemberstext[i][3])
+                {
+                    case 0:
+                        permdirn="";
+                        permmaxmin="";
+                        break;
+                    case 1:
+                        permdirn="x";
+                        permmaxmin="max";
+                        break;
+                    case 2:
+                        permdirn="x";
+                        permmaxmin="min";
+                        break;
+                    case 3:
+                        permdirn="y";
+                        permmaxmin="max";
+                        break;
+                    case 4:
+                        permdirn="y";
+                        permmaxmin="min";
+                        break;
+                    case 5:
+                        permdirn="zz";
+                        permmaxmin="max";
+                        break;
+                    case 6:
+                        permdirn="zz";
+                        permmaxmin="min";
+                        break;
+                    default:
+                        permdirn="";
+                        permmaxmin="";
+                        break;
+                }
                 txtsplittemp=((String)lcmemberstext[i][2]).Split("^");
                 for (int j = 0; j < txtsplittemp.Count(); j++)
                 {
                     txtsplittemp2=(txtsplittemp[j]).Split("#");
                     txtsplittemp3=(txtsplittemp2[1]).Split(",");
                     txtsplittemp4=(txtsplittemp2[0]).Split("|");
-                    rw= new object[] {int.Parse((String)lcmemberstext[i][0]),int.Parse((String)lcmemberstext[i][1]),double.Parse((String)txtsplittemp4[0]),double.Parse((String)txtsplittemp4[1]),double.Parse((String)txtsplittemp3[0]),double.Parse((String)txtsplittemp3[1]),double.Parse((String)txtsplittemp3[2])};
+                    rw= new object[] {int.Parse((String)lcmemberstext[i][0]),int.Parse((String)lcmemberstext[i][1]),double.Parse((String)txtsplittemp4[0]),double.Parse((String)txtsplittemp4[1]),double.Parse((String)txtsplittemp3[0]),double.Parse((String)txtsplittemp3[1]),double.Parse((String)txtsplittemp3[2]),permdirn,permmaxmin};
                     outlist.Add(rw);
                 }
             }
