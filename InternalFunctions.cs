@@ -1529,7 +1529,7 @@ namespace TESTEXDNA
                         cha.UnionWith(beamchapoints[lclist[i]][elementlist[j]]);
                         for (int k = cha.Count-1; k >= 1; k--)
                         {
-                            if (Math.Abs(cha.ElementAt(k) - cha.ElementAt(k - 1)) < 0.0001)
+                            if (Math.Abs(cha.ElementAt(k) - cha.ElementAt(k - 1)) < 0.0001  && cha.ElementAt(k)!=1)
                             {
                                 cha.Remove(cha.ElementAt(k));
                             }
@@ -3167,7 +3167,8 @@ namespace TESTEXDNA
             double nodey;
             double netscaleforce;
             double netscalemoment;
-            for (int i = 0; i < nodes.GetLength(0); i++)
+            int nodecount;
+            for (int i = 0; i < tabularised.GetLength(0)-1; i++)
             {
                 maxmagforce=Math.Max(Math.Max(Math.Abs((double)tabularised[1+i,2]),Math.Abs((double)tabularised[1+i,3])),maxmagforce);
                 maxmagmoment=Math.Max(Math.Abs((double)tabularised[1+i,4]),maxmagmoment);
@@ -3182,10 +3183,11 @@ namespace TESTEXDNA
             }
             netscaleforce=scale/100*graphrange/maxmagforce/2;
             netscalemoment=scale/100*graphrange/maxmagmoment/2;
-            for (int i = 0; i < nodes.GetLength(0); i++)
+            for (int i = 0; i < tabularised.GetLength(0)-1; i++)
             {
-                nodex=(double)nodes[i,0];
-                nodey=(double)nodes[i,1];
+                nodecount=Convert.ToInt32(tabularised[i+1,1]);
+                nodex=(double)nodes[nodecount-1,0];
+                nodey=(double)nodes[nodecount-1,1];
                 outholder.Add(new object[] {nodex,nodey});
                 outholder.Add(new object[] {nodex+netscaleforce*(double)tabularised[i+1,2],nodey});
                 outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
@@ -3210,12 +3212,13 @@ namespace TESTEXDNA
             double nodex;
             double nodey;
             double netscale;
-            
+            int nodecount;
             netscale=scale;
-            for (int i = 0; i < nodes.GetLength(0); i++)
+            for (int i = 0; i < tabularised.GetLength(0)-1; i++)
             {
-                nodex=(double)nodes[i,0];
-                nodey=(double)nodes[i,1];
+                nodecount=Convert.ToInt32(tabularised[i+1,1]);
+                nodex=(double)nodes[nodecount-1,0];
+                nodey=(double)nodes[nodecount-1,1];
                 outholder.Add(new object[] {nodex,nodey});
                 outholder.Add(new object[] {nodex+netscale*((double)tabularised[i+1,2]),nodey+netscale*((double)tabularised[i+1,3])});
                 outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
