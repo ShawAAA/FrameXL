@@ -38,6 +38,8 @@ using System.Data.SqlTypes;
 using MathNet.Numerics.Integration;
 using System.Runtime.Serialization;
 using System.Collections.Immutable;
+using MathNet.Numerics.Optimization;
+using MathNet.Numerics.Statistics;
 
 namespace TESTEXDNA
 {
@@ -633,6 +635,7 @@ namespace TESTEXDNA
                         }
                         
                     }
+                    tempchain.RemoveWhere(x => x<0 || x>1);
                     SortedSet<double> filterchapoints=new SortedSet<double>();
                     filterchapoints.Add(tempchain.ElementAt(0));
                     for (int i = 1; i < tempchain.Count - 1; i++)
@@ -1651,6 +1654,7 @@ namespace TESTEXDNA
                         cha=new SortedSet<double> {0,1};
                         effectmatrix=Matrix<double>.Build.DenseOfArray(new double[,] {{-axial,bending,-rotation},{-axial,bending,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]}});
                     }
+                    cha.RemoveWhere(x => x<0 || x>1);
                     mbdict.Add(elementlist[j],new List<(SortedSet<double>,Matrix<double>)> {(cha,effectmatrix)});
                     
                 }
@@ -4090,6 +4094,217 @@ namespace TESTEXDNA
 
             double ld = double.Parse(table.Rows[0]["load"].ToString() ?? "0");
             return ld;
+        }
+    }
+    class toolclass
+    {
+        public static object[,] vehicleloads(object[,] nodes, object[,] elements, string elementlist,object[,] vehicle,double increment,int startnode,int initialcase)
+        {
+            double[,] tnodes=interfacefunctions.nodefilter(interfacefunctions.filterarrayempties(nodes));
+            double[,] telements=interfacefunctions.elementfilter(interfacefunctions.filterarrayempties(elements));  
+            object[,] tvehicles=interfacefunctions.filterarrayempties(vehicle);
+            Dictionary<int, List<(int,int)>> connectivity=new Dictionary<int, List<(int,int)>>();
+            List<int> connectedels=stiffnessmatcalcs.lcmemberstringread(elementlist,telements.GetLength(0),Enumerable.Range(1,telements.GetLength(0)).ToList());
+            for (int i = 0; i < connectedels.Count; i++)
+            {
+                if (connectivity.ContainsKey((int)telements[connectedels[i]-1,0]))
+                {
+                    connectivity[(int)telements[connectedels[i]-1,0]].Add((connectedels[i],(int)telements[connectedels[i]-1,1]));
+                }
+                else
+                {
+                    connectivity.Add((int)telements[connectedels[i]-1,0],new List<(int,int)>(){(connectedels[i],(int)telements[connectedels[i]-1,1])});
+                }
+                if (connectivity.ContainsKey((int)telements[connectedels[i]-1,1]))
+                {
+                    connectivity[(int)telements[connectedels[i]-1,1]].Add((connectedels[i],(int)telements[connectedels[i]-1,0]));
+                }
+                else
+                {
+                    connectivity.Add((int)telements[connectedels[i]-1,1],new List<(int,int)>(){(connectedels[i],(int)telements[connectedels[i]-1,0])});
+                }
+            }
+            List<int> ends=new List<int>();
+            foreach(var key in connectivity.Keys)            
+            {
+                if (connectivity[key].Count == 1)
+                {
+                    ends.Add(key);
+                }
+            }
+            if (ends.Count != 2)
+            {
+                return new object[,] {{"Error: Vehicle load tool only works for structures with 2 end nodes"}}; 
+            }
+            if (!ends.Contains(startnode))
+            {
+                return new object[,] {{"Error: Start node is not an end node"}}; 
+            }
+            if (ends[0] == ends[1])
+            {
+                return new object[,] {{"Error: Both end nodes are the same"}};
+            }
+            int endnodeindx;
+            if (ends[0] == startnode)
+            {
+                endnodeindx=1;
+            }
+            else
+            {
+                endnodeindx=0;
+            }
+            int currnode=startnode;
+            int nextnode=connectivity[currnode][0].Item2;
+            List<int> elpath=new List<int>();
+            List<int> nodepath=new List<int>() {startnode};
+        
+            while (true)
+            {
+                if (connectivity[currnode][0].Item2 == nextnode)
+                {
+                    elpath.Add(connectivity[currnode][0].Item1);
+                    nodepath.Add(connectivity[currnode][0].Item2);
+                }
+                else
+                {
+                    elpath.Add(connectivity[currnode][1].Item1);
+                    nodepath.Add(connectivity[currnode][1].Item2); 
+                }
+                currnode=nextnode;
+                if(currnode == ends[endnodeindx]){break;}
+                if (connectivity[currnode][0].Item2 == nodepath[nodepath.Count-2])
+                {
+                    nextnode=connectivity[currnode][1].Item2;
+                }
+                else
+                {
+                    nextnode=connectivity[currnode][0].Item2;
+                }
+            }
+            List<double> ellengths=new List<double>() {0};
+            List<int> lowhigh=new List<int>();
+            int node1;
+            int node2;
+            for(int i=0; i < elpath.Count; i++)
+            {
+                if (nodepath[i] == telements[elpath[i] - 1, 0])
+                {
+                    lowhigh.Add(0);    
+                }
+                else
+                {
+                    lowhigh.Add(1);
+                }
+                node1=nodepath[i];
+                node2=nodepath[i+1];
+
+                ellengths.Add(ellengths.Last() + Math.Sqrt(Math.Pow(tnodes[node2-1,0]-tnodes[node1-1,0],2)+Math.Pow(tnodes[node2-1,1]-tnodes[node1-1,1],2)));  
+            }
+            Matrix<double> currentlocation=Matrix<double>.Build.Dense(tvehicles.GetLength(0),2);
+            for (int i = 0; i < tvehicles.GetLength(0); i++)
+            {
+                currentlocation[i,0]=-Convert.ToDouble(tvehicles[i,3]);
+                if ((Convert.ToString(tvehicles[i,0]) ?? "").ToLower()=="patch load")
+                {
+                    currentlocation[i,1]=-Convert.ToDouble(tvehicles[i,5]);
+                }
+            }
+            int[,] currentpos=new int[tvehicles.GetLength(0),2];
+            double lastax=currentlocation.Enumerate().Minimum();
+            int stps=Convert.ToInt32(Math.Ceiling((ellengths.Last()-lastax)/increment)+1);
+            bool patchbool;
+            int lc;
+            double pcnt;
+            double pcnt2;
+            int highindex;
+            int lowindex;
+            List<object[]> outlist=new List<object[]>();
+            for (int i = 0; i < stps; i++)
+            {
+                lc=initialcase+i;
+                for (int j = 0; j < tvehicles.GetLength(0); j++)
+                {
+                    patchbool=(Convert.ToString(tvehicles[j,0]) ?? "").ToLower()=="patch load";
+                    if ((!patchbool && currentlocation[j,0] >=0 && currentlocation[j,0] <= ellengths.Last()) || (patchbool && ((currentlocation[j,0] >=0 && currentlocation[j,0] <= ellengths.Last())|| ( currentlocation[j,1] >=0 && currentlocation[j,1] <= ellengths.Last()))))
+                    {
+                        while (ellengths[currentpos[j, 0]+1] < currentlocation[j,0] && currentlocation[j,0]<=ellengths.Last())
+                        {
+                            currentpos[j, 0]=currentpos[j, 0]+1; 
+                        }
+                        if (!patchbool)
+                        {
+                            if(lowhigh[currentpos[j,0]] == 0)
+                            {
+                                pcnt=(currentlocation[j,0]-ellengths[currentpos[j, 0]])/(ellengths[currentpos[j, 0]+1]-ellengths[currentpos[j, 0]]);
+                            }
+                            else
+                            {
+                                pcnt=1-(currentlocation[j,0]-ellengths[currentpos[j, 0]])/(ellengths[currentpos[j, 0]+1]-ellengths[currentpos[j, 0]]);
+                            }
+                            
+                            outlist.Add(new object[] {lc,elpath[currentpos[j,0]],tvehicles[j,0],tvehicles[j,1],tvehicles[j,2],pcnt,tvehicles[j,4],"",""});
+                        }
+                        else
+                        {
+                            while (ellengths[currentpos[j, 1]+1] < currentlocation[j,1] && currentlocation[j,1]<=ellengths.Last())
+                            {
+                               currentpos[j, 1]=currentpos[j, 1]+1; 
+                            }
+                            if (currentlocation[j, 0] > currentlocation[j, 1])
+                            {
+                                highindex=0;
+                                lowindex=1;
+                            }
+                            else
+                            {
+                                highindex=1;
+                                lowindex=0;
+                            }
+
+                            for (int k=currentpos[j,highindex]; k >= currentpos[j,lowindex]; k--)
+                            {
+                                if(lowhigh[k] == 0)
+                                {
+                                    pcnt=(Math.Min(currentlocation[j,highindex],ellengths[k+1])-ellengths[k])/(ellengths[k+1]-ellengths[k]);
+                                    pcnt2=(Math.Max(currentlocation[j,lowindex],ellengths[k])-ellengths[k])/(ellengths[k+1]-ellengths[k]);
+                                }
+                                else
+                                {
+                                    pcnt=1-(Math.Min(currentlocation[j,highindex],ellengths[k+1])-ellengths[k])/(ellengths[k+1]-ellengths[k]);
+                                    pcnt2=1-(Math.Max(currentlocation[j,lowindex],ellengths[k])-ellengths[k])/(ellengths[k+1]-ellengths[k]);
+                                } 
+                                if (pcnt != pcnt2)
+                                {
+                                    outlist.Add(new object[] {lc,elpath[k],tvehicles[j,0],tvehicles[j,1],tvehicles[j,2],pcnt2,tvehicles[j,4+lowindex*2],pcnt,tvehicles[j,4+highindex*2]});
+                                }
+                            }
+                                
+                        }
+                    }
+                } 
+                currentlocation=currentlocation+increment;
+            }
+            int minlc=9999;
+            for (int i = 0; i < outlist.Count; i++)
+            {
+                minlc=Math.Min(minlc,(int)outlist[i][0]);
+            }
+            if (minlc != initialcase)
+            {
+                for (int i = 0; i < outlist.Count; i++)
+                {
+                    outlist[i][0]=(int)outlist[i][0]-(minlc-initialcase);
+                }
+            }
+            object[,] outarray=new object[outlist.Count,outlist[0].GetLength(0)];
+            for (int i = 0; i < outarray.GetLength(0);i++)
+            {
+                for (int j=0; j < outarray.GetLength(1); j++)
+                {
+                    outarray[i,j]=outlist[i][j];
+                }
+            }  
+            return outarray;
         }
     }
     class controllerclass

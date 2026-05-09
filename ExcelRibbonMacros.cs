@@ -24,8 +24,11 @@ namespace TESTEXDNA
         <tabs>
           <tab id='tab1' label='FrameXL'>
             <group id='group1' label='Setup'>
-              <button id='button1' label='New Structure - Pure Text Output' onAction='SetupNewStruct' tag='text'/> 
-              <button id='button2' label='New Structure - Graphical/Table Output' onAction='SetupNewStruct' tag='simple'/>
+              <button id='sbutton1' label='New Structure - Pure Text Output' onAction='SetupNewStruct' tag='text'/> 
+              <button id='sbutton2' label='New Structure - Graphical/Table Output' onAction='SetupNewStruct' tag='simple'/>
+            </group >
+            <group id='group2' label='Tools'>
+              <button id='tbutton1' label='New vehicle load' onAction='vehcase'/> 
             </group >
           </tab>
         </tabs>
@@ -41,7 +44,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       String wb = xlApp.ActiveWorkbook.name;
       String ws = xlApp.ActiveSheet.name;
       String cell = xlApp.ActiveCell.offset(1,1).address;
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).value="FrameXL V0.2. Created by A. Shaw.";
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).value="FrameXL V0.3. Created by A. Shaw.";
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).resize(1,2).merge();
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,1).value="Auto. update matrix calculations:";
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,1).resize(1,2).merge();
@@ -110,6 +113,9 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       createinputblock(xlApp, wb, ws, cell, offs, "Combination Case Inputs", combination1, 1, combination2);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 1].validation.add(3, 3, 3, "Add,Envelope", 0);
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].addcomment("Case descriptors are equations of the form '1*LC1,2*LC3' or '1*LC1 to 1*LC3, 3*LC5' where the load case lists are comma delineated and either added or enveloped. Every load case requires a factor. 'to' increment steps also increment the case factor. Can actually be input as '1*1+2*3' but this is bad practice.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
       offs=offs+5;
 
       if ((string)tg == "text")
@@ -235,17 +241,69 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       
       //xlApp.workbooks[wb].worksheets[ws].range[cell].offset[20, 10].formula2 = "=SectionProperties(" + xlApp.range(cell).offset(2, 0).resize(2, 15).address + "," + xlApp.range(cell).offset(6, 0).resize(2, 8).address + "," + xlApp.range(cell).offset(10, 0).resize(2, 14).address + "," + xlApp.workbooks[wb].worksheets[ws].range[cell].offset[14].resize[1, 19].address + ")";
     }
-    public void createinputblock(dynamic xlApp, string wb, string ws, string cell, int offst, string ttl, string[] hdings, int scndrow, object[] contents1 = null, object[] contents2 = null)
+    public void vehcase(ExcelDna.Integration.CustomUI.IRibbonControl control)
+    {
+      dynamic xlApp = ExcelDnaUtil.Application;
+      String wb = xlApp.ActiveWorkbook.name;
+      String ws = xlApp.ActiveSheet.name;
+      String cell = xlApp.ActiveCell.address;
+      object noderange = xlApp.InputBox("Please select the node range (entire area coloured as input) of all nodes in the structure:","Select Node Input Range",Type:8);
+      object elrange = xlApp.InputBox("Please select the element range (entire area coloured as input) of all elements in the structure:","Select Element Input Range",Type:8);
+      if (noderange is bool || elrange is bool)
+      {
+        MessageBox.Show("Selection cancelled.");
+        return;
+      }
+      int offs=0;
+      string[] vehinp1 = new string[] { "Element list (elements on chainage)", "Step Increment", "Start node index","Starting load case index"};
+      object[] vehinp2 = new object[] { "1to3", 0.5, "1", "1" };
+      createinputblock(xlApp, wb, ws, cell, offs, "Vehicle Load Inputs", vehinp1, 0, vehinp2);
+      Comment cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,0].addcomment("Element lists can be given as 'All', a list of indexes '1,2,3' or a range '1to3,5to-1'.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      string inprange=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,0].address;
+      offs=offs+4;
+
+      string[] vehloads1 = new string[] { "Point/Patch","Local/Global/Global Projected","Direction","Axle Point Load Chainage / Chainage of Start of Patch (m)","Point Load Magnitude (N), Start of Patch Magnitude (N/m)","Chainage of End of Patch (m)","End of Patch Magnitude (N/m)"};
+      object[] vehloads2 = new object[] { "Point Load","Global Projected","y",0,-1};
+      createinputblock(xlApp, wb, ws, cell, offs, "Vehicle Axle Load Inputs", vehloads1, 2, vehloads2);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 0].validation.add(3, 3, 3, "Point Load,Patch Load", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 0].validation.add(3, 3, 3, "Point Load,Patch Load", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Local,Global,Global Projected", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 1].validation.add(3, 3, 3, "Local,Global,Global Projected", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 2].validation.add(3, 3, 3, "x,y,zz", 0);
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 3, 2].validation.add(3, 3, 3, "x,y,zz", 0);
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,1].addcomment("Local applied x/axial, y/vertical and zz/rotational. Global Projected Applied across the projected length of the element (N/A for rotation).");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,3].addcomment("Chainage should increment in the positive direction, setting in the negative direction places the vehicle loads already on the chainage. Setting chainage 0 sets the first load to be applied at the start node.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].addcomment("Magnitude or equation for magnitude. Equations are input as '#index+lc+2*x+y+2', or similar, with properties derived from the position at which the load 'turns-on' evaluated at either the point load or either side of the path.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
+      string vehrange=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,0].resize[3,7].address;
+      offs=offs+6;
+
+      string[] elementloads1 = new string[] { "Load Case Number", "Element Applied", "Point/Patch","Local/Global/Global Projected","Direction","Point Load Position / LHS of Patch (%)","Point Load Magnitude (N), LHS Patch Magnitude (N/m)","RHS of Patch (%)","RHS Patch Magnitude (N/m)"};
+      object[] elementloads2 = new object[] { };
+      createinputblock(xlApp, wb, ws, cell, offs, "Vehicle Load Results", elementloads1, 3, elementloads2,styleselect:"Output");
+      //xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,0].value="Vehicle Load Calculation";
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,0].formula2 = "=structuralanalysisvehicleloads("+((Microsoft.Office.Interop.Excel.Range)noderange).Address+","+((Microsoft.Office.Interop.Excel.Range)elrange).Address+","+inprange+","+vehrange+","+ xlApp.range[inprange].offset[0,1].address+","+xlApp.range[inprange].offset[0,2].address+","+xlApp.range[inprange].offset[0,3].address+")";
+      //xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,-1].formula2 = "=structuralanalysisarrayindexes("+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,0].address+"#)";
+    }
+
+    public void createinputblock(dynamic xlApp, string wb, string ws, string cell, int offst, string ttl, string[] hdings, int scndrow, object[] contents1 = null, object[] contents2 = null,string styleselect="Input")
     {
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst, -1] = ttl;
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst+1, -1] = "Indexes";
       for (int i = 0; i < hdings.GetLength(0); i++)
       {
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 1, i] = hdings[i];
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 2, i].style = "Input";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 2, i].style = styleselect;
         for (int j=0;j<scndrow;j++)
         {
-          xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 3+j, i].style = "Input";
+          xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst + 3+j, i].style = styleselect;
         }
       }
       if (contents1 == null)

@@ -167,6 +167,27 @@
         {
             return interfacefunctions.arrayindexes(inarray);
         }
+        [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =false,Description = "Vehicle Loads")]
+        public static object[,] Structuralanalysisvehicleloads(
+            [ExcelArgument(Name = "nodes")]
+            object[,] nodes,
+            [ExcelArgument(Name = "elements")]
+            object[,] elements,
+            [ExcelArgument(Name = "elementlist")]
+            string elementlist,
+            [ExcelArgument(Name = "vehicle")]
+            object[,] vehicle,
+            [ExcelArgument(Name = "increment")]
+            double increment,
+            [ExcelArgument(Name = "startnode")]
+            int startnode,
+            [ExcelArgument(Name = "initialcase")]
+            int initialcase)
+
+        {
+            return toolclass.vehicleloads(nodes,elements,elementlist,vehicle,increment,startnode,initialcase);
+        }
+
 
         
         
