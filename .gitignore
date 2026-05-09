@@ -1,0 +1,21 @@
+bin/
+obj/
+*.xll
+*.dll
+*.pdb
+*.sln
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.tmp
+
+# .NET
+*.log
+*.cache
+project.lock.json
+project.fragment.lock.json
+
+# OS-specific
+.DS_Store
+Thumbs.db
