@@ -1854,6 +1854,7 @@ namespace TESTEXDNA
             Matrix<double> tempmat;
             Matrix<double> comparemat;
             List<(SortedSet<double>,Matrix<double>)> templist;
+            int n=5;
             foreach (int mb in lcdict[(lcdict.Keys).ElementAt(0)].Keys)
             {
                 for(int i = 0; i < combs2.Count; i++)
@@ -1864,6 +1865,10 @@ namespace TESTEXDNA
                     }
                 }
                 chamaster=new SortedSet<double>();
+                for (int k = 0; k <= Math.Pow(2, n); k++)
+                {
+                    chamaster.Add(k/Math.Pow(2,n));
+                }
                 interpmats = new  List<List<Matrix<double>>>();
                 for(int i = 0; i < combs2.Count; i++)
                 {
@@ -1884,7 +1889,7 @@ namespace TESTEXDNA
                             tempmat=interpmats[0][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)].Clone();
                             for (int cse = 1; cse < interpmats.Count; cse++)
                             {
-                                comparemat=interpmats[cse][Math.Min(resultcol*2+maxmin,interpmats[0].Count-1)].Clone();
+                                comparemat=interpmats[cse][Math.Min(resultcol*2+maxmin,interpmats[cse].Count-1)].Clone();
                                 for (int matrw = 0; matrw < tempmat.RowCount; matrw++)
                                 {
                                     if (maxmin == 0)
@@ -3313,6 +3318,7 @@ namespace TESTEXDNA
             double effectmag;
             double netscale;
             double chapercent;
+            bool isfirst;
             int tabcols=tabularised.GetLength(1);
             for (int i = 1; i < tabularised.GetLength(0); i++)
             {
@@ -3334,14 +3340,16 @@ namespace TESTEXDNA
                 xvec=(elementx2-elementx1)/magn;
                 yvec=(elementy2-elementy1)/magn;
                 outholder.Add(new object[] {elementx1,elementy1});
+                isfirst=true;
                 while ((int)tabularised[tabiter, 1] == i + 1)
                 {
-                    if ((string)tabularised[tabiter,tabcols-1]!=(string)tabularised[tabiter-1,tabcols-1]! && tabiter != 1)
+                    if ((string)tabularised[tabiter,tabcols-1]!=(string)tabularised[tabiter-1,tabcols-1]! && !isfirst)
                     {
                         outholder.Add(new object[] {elementx2,elementy2});
                         outholder.Add(new object[] {ExcelError.ExcelErrorNA,ExcelError.ExcelErrorNA});
                         outholder.Add(new object[] {elementx1,elementy1});
                     }
+                    isfirst=false;
                     effectmag=(double)tabularised[tabiter,4+dirnindex];
                     if (dirnindex == 2)
                     {

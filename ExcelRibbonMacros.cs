@@ -206,7 +206,7 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
         hlder.NewSeries();
         Series effectseries = chrt.SeriesCollection(3);
         effectseries.Type = -4169;
-        effectseries.Name = "='"+ws+"'!" +xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,4].address;
+        effectseries.Name = "='"+ws+"'!" +xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,3].address;
         effectseries.Smooth = false;
         effectseries.MarkerStyle = Microsoft.Office.Interop.Excel.XlMarkerStyle.xlMarkerStyleNone;
         effectseries.Format.Line.Visible = MsoTriState.msoTrue;;
