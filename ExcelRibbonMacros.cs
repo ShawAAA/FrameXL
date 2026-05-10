@@ -2,17 +2,21 @@
 using ExcelDna.Integration.CustomUI;
 using Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms.VisualStyles;
-using System.Drawing.Imaging;
 
 namespace TESTEXDNA
 {
+  public class MyAddIn : IExcelAddIn
+  {
+      public void AutoOpen()
+      {
+          MessageBox.Show("FrameXL is a 2D frame analysis tool built in C# and linked to Excel through 'excel-dna'. For license information, see https://github.com/ShawAAA/FrameXL/. \n\nFrameXL is in early development, and while reasonable efforts have been made to validate results, there may be incorrect or misleading results. As such, refer to the license agreement. Please report any issues to the GitHub repository. \n\nCreated by A. Shaw. \n\nRefer cell notes for guidance on inputting data and interpreting results.");
+      }
+
+      public void AutoClose()
+      {
+      }
+  }
   [ComVisible(true)]
   public class RibbonController : ExcelRibbon
   {
@@ -27,8 +31,12 @@ namespace TESTEXDNA
               <button id='sbutton1' label='New Structure - Pure Text Output' onAction='SetupNewStruct' tag='text'/> 
               <button id='sbutton2' label='New Structure - Graphical/Table Output' onAction='SetupNewStruct' tag='simple'/>
             </group >
-            <group id='group2' label='Tools'>
+            <group id='group2' label='Structural Tools'>
               <button id='tbutton1' label='New vehicle load' onAction='vehcase'/> 
+            </group >
+            <group id='group3' label='General Tools'>
+              <button id='gbutton1' label='New Animation' onAction='anim'/>
+              <button id='gbutton2' label='Run Animations' onAction='animrun'/> 
             </group >
           </tab>
         </tabs>
@@ -36,7 +44,7 @@ namespace TESTEXDNA
     </customUI>";
     }
 
-public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
+    public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
     {
       //MessageBox.Show("Hello from control " + control.Id);
       object tg=control.Tag;
@@ -291,6 +299,76 @@ public void SetupNewStruct(ExcelDna.Integration.CustomUI.IRibbonControl control)
       //xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,0].value="Vehicle Load Calculation";
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,0].formula2 = "=structuralanalysisvehicleloads("+((Microsoft.Office.Interop.Excel.Range)noderange).Address+","+((Microsoft.Office.Interop.Excel.Range)elrange).Address+","+inprange+","+vehrange+","+ xlApp.range[inprange].offset[0,1].address+","+xlApp.range[inprange].offset[0,2].address+","+xlApp.range[inprange].offset[0,3].address+")";
       //xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,-1].formula2 = "=structuralanalysisarrayindexes("+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+2,0].address+"#)";
+    }
+    public void anim(ExcelDna.Integration.CustomUI.IRibbonControl control)
+    {
+      dynamic xlApp = ExcelDnaUtil.Application;
+      String wb = xlApp.ActiveWorkbook.name;
+      String ws = xlApp.ActiveSheet.name;
+      String cell = xlApp.ActiveCell.address;
+      object animrange = xlApp.InputBox("Please select the cell value to be updated to run the animation","Select Animation Input Range:",Type:8);
+      if (animrange is bool)
+      {
+        MessageBox.Show("Selection cancelled.");
+        return;
+      }
+      else if (((Microsoft.Office.Interop.Excel.Range)animrange).Cells.CountLarge>1)
+      {
+        MessageBox.Show("Please select a single cell.");
+        return;
+      }
+      string[] anim1 = new string[] { "Update Cell Range", "Start Value", "End Value","Step Increment","Time delay between steps (ms)","Loop Count (capped at 10)"};
+      object[] anim2 = new object[] { ((Microsoft.Office.Interop.Excel.Range)animrange).Address, 1, 10,1,100,5};
+      createinputblock(xlApp, wb, ws, cell, 0, "Animation Inputs", anim1, 0, anim2);
+    }
+    public void animrun(ExcelDna.Integration.CustomUI.IRibbonControl control)
+    {
+      dynamic xlApp = ExcelDnaUtil.Application;
+      String wb = xlApp.ActiveWorkbook.name;
+      String ws = xlApp.ActiveSheet.name;
+      object animrange = xlApp.InputBox("Please select theanimation you want to run (select the cell containing the heading 'Animation Inputs')","Select Animation:",Type:8);
+      if (animrange is bool)
+      {
+        MessageBox.Show("Selection cancelled.");
+        return;
+      }
+      else if (((Microsoft.Office.Interop.Excel.Range)animrange).Cells.CountLarge>1)
+      {
+        MessageBox.Show("Please select a single cell.");
+        return;
+      }
+      string cell=((Microsoft.Office.Interop.Excel.Range)animrange).Address;
+      string animcell=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,1].value;
+      double start=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,2].value;
+      double end=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,3].value;
+      double step=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,4].value;
+      double delay=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,5].value;
+      string initval=Convert.ToString(xlApp.workbooks[wb].worksheets[ws].range[animcell].value);
+      int loop=(int)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,6].value;
+      loop=Math.Max(1,Math.Min(loop,10));
+      step=Math.Abs(step)*Math.Sign(end-start);
+      while (true)
+      {
+        for (double val = start; val <= end; val += step)
+        {
+          xlApp.workbooks[wb].worksheets[ws].range[animcell].value = val;
+          if (xlApp.ActiveSheet.name == ws)
+          {
+            foreach (ChartObject chartObj in xlApp.ActiveSheet.ChartObjects())
+            {
+                chartObj.Chart.Refresh();
+                System.Windows.Forms.Application.DoEvents();
+            }
+          }
+          System.Threading.Thread.Sleep((int)delay);
+        }
+        loop--;
+        if (loop==0)
+        {
+          break;
+        }
+      }
+      xlApp.workbooks[wb].worksheets[ws].range[animcell]=initval;
     }
 
     public void createinputblock(dynamic xlApp, string wb, string ws, string cell, int offst, string ttl, string[] hdings, int scndrow, object[] contents1 = null, object[] contents2 = null,string styleselect="Input")

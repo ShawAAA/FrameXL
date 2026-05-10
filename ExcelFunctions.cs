@@ -1,10 +1,6 @@
 ﻿namespace TESTEXDNA
 {
     using ExcelDna.Integration;
-    using System;
-    using System.Drawing.Drawing2D;
-    using System.Windows.Forms.VisualStyles;
-    using MathNet.Numerics.LinearAlgebra;
 
     public static class ExcelFunctions
     {
