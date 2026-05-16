@@ -85,11 +85,11 @@ namespace TESTEXDNA
             }
             for (int i = 0; i < telements.GetLength(0); i++)
             {
-                if (!(telements[i,4]==1 || telements[i,5]==1 || telements[i,6]==1))
+                if (!(telements[i,4]==-1 || telements[i,5]==-1 || telements[i,6]==-1))
                 {
                     releasecount=releasecount+3;
                 }
-                if (!(telements[i,7]==1 || telements[i,8]==1 || telements[i,9]==1))
+                if (!(telements[i,7]==-1 || telements[i,8]==-1 || telements[i,9]==-1))
                 {
                     releasecount=releasecount+3;
                 }
@@ -124,6 +124,7 @@ namespace TESTEXDNA
             int rowcolcontroller;
             int nodenumber;
             double vecangle;
+            double t;
             for (int i = 0; i < telements.GetLength(0); i++)
             {
                 vecangle=beamgeom[i,3];
@@ -131,7 +132,7 @@ namespace TESTEXDNA
                 {
                     rowcolcontroller=(int)Math.Ceiling((double)(j));
                     nodenumber=(int)telements[i,rowcolcontroller];
-                    if (telements[i,4+j*3]==1 || telements[i,5+j*3]==1 || telements[i,6+j*3]==1)
+                    if (telements[i,4+j*3]==-1 || telements[i,5+j*3]==-1 || telements[i,6+j*3]==-1)
                     {
                         switch (telements[i, 4 + j * 3] + telements[i, 5 + j * 3] * 2)
                         {
@@ -140,7 +141,7 @@ namespace TESTEXDNA
                                 Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,(nodenumber-1)*3+1]=1;                            
 
                                 break;
-                            case 1:
+                            case -1:
                                 if (Math.Abs(vecangle) < 1e-10 || Math.Abs(vecangle - Math.PI) < 1e-10)
                                 {
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol]=1;
@@ -154,14 +155,14 @@ namespace TESTEXDNA
                                 }
                                 else
                                 {
-
+                                    t=Math.Tan(vecangle+Math.PI/2);
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3]=1;
-                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol]=-Math.Sin(vecangle+Math.PI/2);
-                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,(nodenumber-1)*3+1]=1;
-                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol]=Math.Cos(vecangle+Math.PI/2);
+                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3+1]=t;
+                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol+1]=-t;
+                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol+1]=1;
                                 }
                                 break;    
-                            case 2:
+                            case -2:
                                 if (Math.Abs(vecangle) < 1e-10 || Math.Abs(vecangle - Math.PI) < 1e-10)
                                 {
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3]=1;
@@ -176,13 +177,14 @@ namespace TESTEXDNA
                                 }
                                 else
                                 {
+                                    t=Math.Tan(vecangle);
                                     Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3]=1;
-                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol]=-Math.Sin(vecangle);
-                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,(nodenumber-1)*3+1]=1;
-                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol]=Math.Cos(vecangle);
+                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3+1]=t;
+                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol+1]=-t;
+                                    Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol+1]=1;
                                 }
                                 break;
-                            case 3:
+                            case -3:
                                 Tarray[tnodes.GetLength(0)*6+i*6+j*3,currentcol]=1;
                                 Tarray[tnodes.GetLength(0)*6+i*6+j*3+1,currentcol+1]=1;
                                 break;                                    
@@ -2589,7 +2591,7 @@ namespace TESTEXDNA
                 {
                     if ((bool)inarray[i, 4 + j])
                     {
-                        outarray[i,4+j]=1;
+                        outarray[i,4+j]=-1;
                     }
                     else
                     {
