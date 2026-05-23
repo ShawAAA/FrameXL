@@ -14,7 +14,7 @@ Uses Euler-Bernoulli beams for structural analysis in 2d frames. Supports:
     Designed to produce error values in cells if given misinputs rather than hanging your excel instance.
     One-button initialisation for new structures.
     Variable EA/EI properties.
-    Beam end releases.
+    Beam end releases, spring end releases.
     Node springs (directionally translational and rotational).
     Nonlinear node springs, input via spring curve directionally.
     Point and distributed beam loads in x/y/zz directions in both local, global and projected coordinate systems.
@@ -58,5 +58,3 @@ Excluded features:
 
     3d analysis. While conceptually it is possible that 3d is not that much harder than 2d analysis on a software level, I dont believe I could ever do enough debugging/testing to have a sufficient degree of confidence that the results are correct. Furthermore, I would need to adopt an entirely different method of graphing the structure/results. Generally I see this tool as something to be used for fiddly small structures that are a bit too simple to be worth opening a more complicated software. Adding 3d functionality changes this usecase entirely.
     Capacity calculations/automatic component utilisation calculations. Ultimately I think this should be left to the user, the tool linking into user-created capacity sheets. I think that baking code clauses into the tool allows the user to design a structure while not understanding the underlying design assumptions. Furthermore it would increase the scope and complexity of the tool unacceptably.
-    Spring end releases. I believe this would require a relatively large degree of rework to how the structural stiffness matrix is created, which is not something I am currently willing to rework. Need to do a full analysis to determine how easy this would be.
-

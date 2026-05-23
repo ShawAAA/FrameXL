@@ -52,7 +52,7 @@ namespace TESTEXDNA
       String wb = xlApp.ActiveWorkbook.name;
       String ws = xlApp.ActiveSheet.name;
       String cell = xlApp.ActiveCell.offset(1,1).address;
-      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).value="FrameXL V0.3. Created by A. Shaw.";
+      xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).value="FrameXL V0.4. Created by A. Shaw.";
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,-1).resize(1,2).merge();
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,1).value="Auto. update matrix calculations:";
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset(-1,1).resize(1,2).merge();
@@ -65,14 +65,17 @@ namespace TESTEXDNA
       object[] nodes2 = new object[] { 0, 0, "True","True","True"};
       object[] nodes3 = new object[] { 1, 0, "False","False","False"};
       createinputblock(xlApp, wb, ws, cell, offs, "Node Inputs", nodes1, 2, nodes2,nodes3);
-      Comment cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].addcomment("Fixities as True/False or with stiffness N/m or N/rad. Input spring curves with '-disp/rot,-force/moment;...,...;disp/rot,force/moment'. 'disp/rot' coordinates are in global reference system.");
+      Comment cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,2].addcomment("Fixities as True/False or with stiffness N/m or Nm/rad. Input spring curves with '-disp/rot,-force/moment;...,...;disp/rot,force/moment'. 'disp/rot' coordinates are in global reference system.");
       cmt.Shape.TextFrame.Characters().Font.Bold = false;
       cmt.Shape.TextFrame.AutoSize = true;
       offs=offs+6;
       
       string[] element1 = new string[] { "Node 1 Index", "Node 2 Index", "EA (N)","EI (Nm2)","End 1 Axial Release","End 1 Shear Release","End 1 Rotational Release","End 2 Axial Release","End 2 Shear Release","End 2 Rotational Release"};
-      object[] element2 = new object[] { 1, 2, 1000,1000,false,false,false,false,false,false};
+      object[] element2 = new object[] { 1, 2, 1000,1000,"False","False","False","False","False","False"};
       createinputblock(xlApp, wb, ws, cell, offs, "Element Inputs", element1, 1, element2);
+      cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].addcomment("Releases as True/False or with stiffness N/m or Nm/rad.");
+      cmt.Shape.TextFrame.Characters().Font.Bold = false;
+      cmt.Shape.TextFrame.AutoSize = true;
       offs=offs+5;
 
       string[] nodeloads1 = new string[] { "Load Case Number", "Node Applied", "Load Direction","Load Magnitude (N or Nm)"};

@@ -85,11 +85,11 @@ namespace TESTEXDNA
             }
             for (int i = 0; i < telements.GetLength(0); i++)
             {
-                if (!(telements[i,4]==-1 || telements[i,5]==-1 || telements[i,6]==-1))
+                if (!(telements[i,4]!=0 || telements[i,5]!=0 || telements[i,6]!=0))
                 {
                     releasecount=releasecount+3;
                 }
-                if (!(telements[i,7]==-1 || telements[i,8]==-1 || telements[i,9]==-1))
+                if (!(telements[i,7]!=0 || telements[i,8]!=0 || telements[i,9]!=0))
                 {
                     releasecount=releasecount+3;
                 }
@@ -132,9 +132,9 @@ namespace TESTEXDNA
                 {
                     rowcolcontroller=(int)Math.Ceiling((double)(j));
                     nodenumber=(int)telements[i,rowcolcontroller];
-                    if (telements[i,4+j*3]==-1 || telements[i,5+j*3]==-1 || telements[i,6+j*3]==-1)
+                    if (telements[i,4+j*3]!=0 || telements[i,5+j*3]!=0 || telements[i,6+j*3]!=0)
                     {
-                        switch (telements[i, 4 + j * 3] + telements[i, 5 + j * 3] * 2)
+                        switch (-Math.Min(Math.Abs(telements[i, 4 + j * 3]),1) + -Math.Min(Math.Abs(telements[i, 5 + j * 3]),1) * 2)
                         {
                             case 0:
                                 Tarray[tnodes.GetLength(0)*6+i*6+j*3,(nodenumber-1)*3]=1;
@@ -252,6 +252,60 @@ namespace TESTEXDNA
                     }
                 
                 }
+            }
+            int nodeindx;
+            double vecangle;
+            double cx;
+            double cy;
+            double mag;
+            for (int i = 0; i < telements.GetLength(0); i++)
+            {
+                for (int j=0;j<2;j++)
+                {
+                    if (telements[i,4+j*3]>0 || telements[i,5+j*3]>0 || telements[i, 6 + j * 3] > 0)
+                    {
+                        nodeindx=(int)telements[i,j]-1;
+                        vecangle=beamgeom[i,3];
+                        cx=Math.Abs(Math.Cos(vecangle));
+                        cy=Math.Abs(Math.Sin(vecangle));
+                        if (telements[i,4+j*3]>0)
+                        {
+                            mag=telements[i,4+j*3];
+                            kmat[nodeindx*3,nodeindx*3]=kmat[nodeindx*3,nodeindx*3]+mag*cx;
+                            kmat[nodeindx*3,tnodes.GetLength(0)*6+i*6+j*3]=kmat[nodeindx*3,tnodes.GetLength(0)*6+i*6+j*3]-mag*cx;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3,nodeindx*3]=kmat[tnodes.GetLength(0)*6+i*6+j*3,nodeindx*3]-mag*cx;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3,tnodes.GetLength(0)*6+i*6+j*3]=kmat[tnodes.GetLength(0)*6+i*6+j*3,tnodes.GetLength(0)*6+i*6+j*3]+mag*cx;
+                            kmat[nodeindx*3+1,nodeindx*3+1]=kmat[nodeindx*3+1,nodeindx*3+1]+mag*cy;
+                            kmat[nodeindx*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]=kmat[nodeindx*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]-mag*cy;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3+1,nodeindx*3+1]=kmat[tnodes.GetLength(0)*6+i*6+j*3+1,nodeindx*3+1]-mag*cy;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]=kmat[tnodes.GetLength(0)*6+i*6+j*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]+mag*cy;
+                        }
+                        if (telements[i,5+j*3]>0)
+                        {
+                            mag=telements[i,5+j*3];
+                            kmat[nodeindx*3,nodeindx*3]=kmat[nodeindx*3,nodeindx*3]+mag*cy;
+                            kmat[nodeindx*3,tnodes.GetLength(0)*6+i*6+j*3]=kmat[nodeindx*3,tnodes.GetLength(0)*6+i*6+j*3]-mag*cy;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3,nodeindx*3]=kmat[tnodes.GetLength(0)*6+i*6+j*3,nodeindx*3]-mag*cy;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3,tnodes.GetLength(0)*6+i*6+j*3]=kmat[tnodes.GetLength(0)*6+i*6+j*3,tnodes.GetLength(0)*6+i*6+j*3]+mag*cy;
+                            kmat[nodeindx*3+1,nodeindx*3+1]=kmat[nodeindx*3+1,nodeindx*3+1]+mag*cx;
+                            kmat[nodeindx*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]=kmat[nodeindx*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]-mag*cx;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3+1,nodeindx*3+1]=kmat[tnodes.GetLength(0)*6+i*6+j*3+1,nodeindx*3+1]-mag*cx;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]=kmat[tnodes.GetLength(0)*6+i*6+j*3+1,tnodes.GetLength(0)*6+i*6+j*3+1]+mag*cx;
+                        }
+                        if (telements[i,6+j*3]>0)
+                        {
+                            mag=telements[i,6+j*3];
+                            kmat[nodeindx*3+2,nodeindx*3+2]=kmat[nodeindx*3+2,nodeindx*3+2]+mag;
+                            kmat[nodeindx*3+2,tnodes.GetLength(0)*6+i*6+j*3+2]=kmat[nodeindx*3+2,tnodes.GetLength(0)*6+i*6+j*3+2]-mag;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3+2,nodeindx*3+2]=kmat[tnodes.GetLength(0)*6+i*6+j*3+2,nodeindx*3+2]-mag;
+                            kmat[tnodes.GetLength(0)*6+i*6+j*3+2,tnodes.GetLength(0)*6+i*6+j*3+2]=kmat[tnodes.GetLength(0)*6+i*6+j*3+2,tnodes.GetLength(0)*6+i*6+j*3+2]+mag;
+                        }
+                    }
+                    
+                    
+                }
+            
+
             }
             return kmat;
         }
@@ -1455,10 +1509,15 @@ namespace TESTEXDNA
             SortedSet<double> cha;
             double axialforce;
             double axialtrans;
+            double axialtrans2;
             double bendingtransforce;
             double bendingmoment;
             double bendingtrans;
+            double bendingtrans2;
             double rotation;
+            double rotation2;
+            double EI;
+            double EA;
             int beamcount=beamgeom.GetLength(0);
             int beamzeroindex=totaldof-beamcount*6;
             bool isvalid;
@@ -1474,12 +1533,21 @@ namespace TESTEXDNA
                     
                     s=Math.Sin(beamgeom[elementlist[j]-1,3]);
                     c=Math.Cos(beamgeom[elementlist[j]-1,3]);
-                    axialforce=-(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*s);
+                    EI=beamgeom[elementlist[j]-1,5];
+                    EA=beamgeom[elementlist[j]-1,4];
+                    L=beamgeom[elementlist[j]-1,0];
+                    //axialforce=-(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*s);
                     axialtrans=(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,0]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,0]*s);
-                    bendingtransforce=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*c;
-                    bendingmoment=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,1];
+                    axialtrans2=(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+3,0]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+4,0]*s);
+                    axialforce=EA/L*(axialtrans2-axialtrans);
+                    //bendingtransforce=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*c;
+                    //bendingmoment=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,1];
                     bendingtrans=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,0]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,0]*c;
+                    bendingtrans2=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+3,0]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+4,0]*c;
                     rotation=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,0];
+                    rotation2=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,0];
+                    bendingtransforce=EI/Math.Pow(L,3)*(12*bendingtrans+6*L*rotation-12*bendingtrans2+6*L*rotation2);
+                    bendingmoment=-EI/Math.Pow(L,2)*(6*bendingtrans+4*L*rotation-6*bendingtrans2+2*L*rotation2);
                     isvalid=false;
                     if (beamloadsholder.ContainsKey(lclist[i]))
                     {
@@ -1581,12 +1649,21 @@ namespace TESTEXDNA
             double c;
             List<double[,]> bloads;
             SortedSet<double> cha;
-            double axial;
-            double bending;
+            double axialforce;
+            double axialtrans;
+            double axialtrans2;
+            double bendingtransforce;
+            double bendingmoment;
+            double bendingmoment2;
+            double bendingtrans;
+            double bendingtrans2;
             double rotation;
+            double rotation2;
             int beamcount=beamgeom.GetLength(0);
             int beamzeroindex=totaldof-beamcount*6;
             bool isvalid;
+            double EI;
+            double EA;
             double moveholder;
             Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>> lcdict=new Dictionary<int,Dictionary<int,List<(SortedSet<double>,Matrix<double>)>>>();
             Dictionary<int,List<(SortedSet<double>,Matrix<double>)>> mbdict;
@@ -1597,9 +1674,22 @@ namespace TESTEXDNA
                 { 
                     s=Math.Sin(beamgeom[elementlist[j]-1,3]);
                     c=Math.Cos(beamgeom[elementlist[j]-1,3]);
-                    axial=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*s;
-                    bending=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*c;
-                    rotation=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,1];
+                    EI=beamgeom[elementlist[j]-1,5];
+                    EA=beamgeom[elementlist[j]-1,4];
+                    L=beamgeom[elementlist[j]-1,0];
+                    //axialforce=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*s;
+                    //bendingtransforce=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,1]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,1]*c;
+                    //bendingmoment=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,1];
+                    axialtrans=(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,0]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,0]*s);
+                    axialtrans2=(resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+3,0]*c+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+4,0]*s);
+                    axialforce=EA/L*(axialtrans2-axialtrans);
+                    bendingtrans=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6,0]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+1,0]*c;
+                    bendingtrans2=-resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+3,0]*s+resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+4,0]*c;
+                    rotation=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+2,0];
+                    rotation2=resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,0];
+                    bendingtransforce=EI/Math.Pow(L,3)*(12*bendingtrans+6*L*rotation-12*bendingtrans2+6*L*rotation2);
+                    bendingmoment=-EI/Math.Pow(L,2)*(6*bendingtrans+4*L*rotation-6*bendingtrans2+2*L*rotation2);
+                    bendingmoment2=EI/Math.Pow(L,2)*(6*bendingtrans+2*L*rotation-6*bendingtrans2+4*L*rotation2);
                     isvalid=false;
                     if (beamloadsholder.ContainsKey(lclist[i]))
                     {
@@ -1612,13 +1702,13 @@ namespace TESTEXDNA
                     {
                         cha=new SortedSet<double>(beamchapoints[lclist[i]][elementlist[j]]);
                         bloads=beamloadsholder[lclist[i]][elementlist[j]];
-                        effectmatrix=stiffnessmatcalcs.beamactioncalc(bloads,cha,axial,bending,rotation,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]);
+                        effectmatrix=stiffnessmatcalcs.beamactioncalc(bloads,cha,-axialforce,bendingtransforce,-bendingmoment,bendingmoment2);
 
                     }
                     else
                     {
                         cha=new SortedSet<double> {0,1};
-                        effectmatrix=Matrix<double>.Build.DenseOfArray(new double[,] {{-axial,bending,-rotation},{-axial,bending,resultsholder[lclist[i]][beamzeroindex+(elementlist[j]-1)*6+5,1]}});
+                        effectmatrix=Matrix<double>.Build.DenseOfArray(new double[,] {{axialforce,bendingtransforce,bendingmoment},{axialforce,bendingtransforce,bendingmoment2}});
                     }
                     cha.RemoveWhere(x => x<0 || x>1);
                     mbdict.Add(elementlist[j],new List<(SortedSet<double>,Matrix<double>)> {(cha,effectmatrix)});
@@ -2588,15 +2678,31 @@ namespace TESTEXDNA
                 outarray[i,2]=(double)inarray[i,2];
                 outarray[i,3]=(double)inarray[i,3];
                 for (int j = 0; j < 6; j++)
-                {
-                    if ((bool)inarray[i, 4 + j])
+                {   
+                    if (inarray[i,4+j] is bool)
                     {
-                        outarray[i,4+j]=-1;
+                        if ((bool)inarray[i, 4 + j])
+                        {
+                            outarray[i,4+j]=-1;
+                        }
+                        else
+                        {
+                            outarray[i,4+j]=0;
+                        }
                     }
                     else
                     {
-                        outarray[i,4+j]=0;
+                        if ((double)inarray[i, 4 + j] == 0)
+                        {
+                            outarray[i,4+j]=-1;
+                        }
+                        else
+                        {
+                            outarray[i,4+j]=(double)inarray[i,4+j];
+                        }
+                        
                     }
+                    
                 }
             }
 
@@ -4281,6 +4387,31 @@ namespace TESTEXDNA
             return outarray;
         }
     }
+    class matrixrender
+    {
+        public static void PrintMatrix(Matrix<double> M)
+        {
+            int rows = M.RowCount;
+            int cols = M.ColumnCount;
+
+            int[] widths = new int[cols];
+            for (int j = 0; j < cols; j++)
+                widths[j] = Enumerable.Range(0, rows)
+                    .Select(i => M[i, j].ToString("0.###").Length)
+                    .Max();
+
+            for (int i = 0; i < rows; i++)
+            {
+                Console.Write("[ ");
+                for (int j = 0; j < cols; j++)
+                {
+                    string s = M[i, j].ToString("0.###").PadLeft(widths[j]);
+                    Console.Write(s + (j == cols - 1 ? "" : "  "));
+                }
+                Console.WriteLine(" ]");
+            }
+        }
+    }
     class controllerclass
     {
         public static string[,] controller(double[,] tnodes,double[,] telements,double[,] tloads,double[,] tbloads,object[,] extracts, Dictionary<(int,int),List<double[]>> tnsprings,object[,] tlcomb)
@@ -4348,6 +4479,7 @@ namespace TESTEXDNA
                 }
                 u=tmat.Multiply(uhatvector);
                 f=kmat.Multiply(u);
+                //matrixrender.PrintMatrix(kmat);
                 results=Matrix<double>.Build.DenseOfColumnVectors(u,f);
                 resultsholder.Add(key,results);
                 results=Matrix<double>.Build.DenseOfColumnVectors(uhatvector,fhatvector);
