@@ -183,9 +183,32 @@
         {
             return toolclass.vehicleloads(nodes,elements,elementlist,vehicle,increment,startnode,initialcase);
         }
+        [ExcelFunction(IsVolatile =false,IsThreadSafe = false,IsHidden =true,Description = "Structural Analysis-tabularise")]
+        public static object Structuralanalysisgraphvoid(
+            [ExcelArgument(Name = "Results")]
+            object[,] results,
+            [ExcelArgument(Name = "Requested")]
+            object[,] requests,
+            [ExcelArgument(Name = "Nodes")]
+            object[,] nodes,
+            [ExcelArgument(Name = "Elements")]
+            object[,] elements,
+            [ExcelArgument(Name = "Nodes Loads")]
+            object[,] loads,
+            [ExcelArgument(Name = "Beam Loads")]
+            object[,] bloads)
 
+        {
+            var caller = XlCall.Excel(XlCall.xlfCaller);
+            if (caller is ExcelReference reference)
+            {
+                string rng = "$"+toolclass.ColumnNumberToName(reference.ColumnFirst) + "$"+(reference.RowFirst + 1);
+                PlotManager.UpdatePlotcontroller(rng);
+                
+            }
+            return "RENDER/RECALCULATE";
 
-        
+        }
         
     }
 }

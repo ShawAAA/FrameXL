@@ -29,7 +29,8 @@ namespace TESTEXDNA
           <tab id='tab1' label='FrameXL'>
             <group id='group1' label='Setup'>
               <button id='sbutton1' label='New Structure - Pure Text Output' onAction='SetupNewStruct' tag='text'/> 
-              <button id='sbutton2' label='New Structure - Graphical/Table Output' onAction='SetupNewStruct' tag='simple'/>
+              <button id='sbutton2' label='New Structure - Excel Graphical/Table Output' onAction='SetupNewStruct' tag='simple'/>
+              <button id='sbutton3' label='New Structure - Windowed Graphical Output' onAction='SetupNewStruct' tag='advanced'/>
             </group >
             <group id='group2' label='Structural Tools'>
               <button id='tbutton1' label='New vehicle load' onAction='vehcase'/> 
@@ -144,7 +145,7 @@ namespace TESTEXDNA
         offs=offs+5;
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
       
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysis(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+","+ xlApp.range(cell).offset(offs-3, 0).resize(2,4).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,3].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysis(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+","+ xlApp.range(cell).offset(offs-3, 0).resize(2,4).address+ "))";
       }
       else if ((string)tg == "simple")
       {
@@ -168,7 +169,7 @@ namespace TESTEXDNA
         string requestsaddress=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 0].address;
         offs=offs+4;
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
-        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,4].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,3].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+ "))";
         xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].resize(5,6).HorizontalAlignment=5;
         string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].address();
         offs=offs+5;
@@ -248,6 +249,42 @@ namespace TESTEXDNA
         chrt.PlotArea.Width = 0.8*(rght-lft);
         chrt.PlotArea.Height = 0.8*(rght-lft);
       }
+      else if ((string)tg == "advanced")
+      {
+        string[] graphresults1 = new string[] { "Graph LC", "Graph Actions/Displacements", "Graph Elements/Nodes","Graph Action Direction","Graph scale factor","Tabularise Actions/Displacements","Tabularise Elements/Nodes","Tabularise Load Case List","Tabularise Element/Node Index List"};
+        object[] graphresults2 = new object[] { 1, "Actions", "Elements","x",100,"Actions","Elements","All","All"};
+        createinputblock(xlApp, wb, ws, cell, offs, "Graph/Table Controls", graphresults1, 0, graphresults2);
+        cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs].addcomment("Graphing/Tabularisation formulas can be duplicated to extract multiple sets of results at the same time. Load case/node/element lists can be given as 'All', a list of indexes '1,2,3' or a range '1to3,5to6'. Node 'actions' are the reaction forces only, while element actions are the internal actions. Element actions/displacements are in local coords while node actions/displacements are in global coords. ");
+        cmt.Shape.TextFrame.Characters().Font.Bold = false;
+        cmt.Shape.TextFrame.AutoSize = true;
+        cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,3].addcomment("Graphs either local beam x, y or zz actions (axial, shear, bending respectively). Not used for displacements as displacements are directly rendered.");
+        cmt.Shape.TextFrame.Characters().Font.Bold = false;
+        cmt.Shape.TextFrame.AutoSize = true;
+        cmt=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,4].addcomment("Scale factor for displacements, arbitrary graphing factor for actions");
+        cmt.Shape.TextFrame.Characters().Font.Bold = false;
+        cmt.Shape.TextFrame.AutoSize = true;
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 1].validation.add(3, 3, 3, "Actions,Displacements,Loads", 0);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 2].validation.add(3, 3, 3, "Nodes,Elements", 0);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 3].validation.add(3, 3, 3, "x,y,zz", 0);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 5].validation.add(3, 3, 3, "Actions,Displacements,Loads", 0);
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 6].validation.add(3, 3, 3, "Nodes,Elements", 0);
+        string requestsaddress=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs + 2, 0].address;
+        offs=offs+4;
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,-1].resize[20,10].Columns.Autofit();
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2 = "=if("+  xlApp.workbooks[wb].worksheets[ws].range[cell].offset[-1,3].address+"=\"OFF\",\"Calculations Paused.\",structuralanalysissimple(" + xlApp.range(cell).offset(2, 0).resize(3,5).address +","+ xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address +","+ xlApp.range(cell).offset(24, 0).resize(2,3).address+ "))";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].resize(5,6).HorizontalAlignment=5;
+        string resultsblockad=(string)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].address();
+        offs=offs+5;
+        Microsoft.Office.Interop.Excel.Range rnge=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].resize[4,5];
+        Microsoft.Office.Interop.Excel.Button btn=xlApp.workbooks[wb].worksheets[ws].Buttons().Add(rnge.Left, rnge.Top, rnge.Width, rnge.Height);
+        btn.OnAction = "Showplotmacro";
+        btn.Caption = "Render Graph";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].formula2="=Structuralanalysisgraphvoid("+resultsblockad+"#,"+xlApp.range(cell).offset(offs-7, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
+        offs=offs+5;
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs,-1].value="Results Table";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,-1].formula2="=structuralanalysistabularise("+resultsblockad+"#,"+ xlApp.range(cell).offset(offs-12, 0).resize(1,9).address+","+xlApp.range(cell).offset(2, 0).resize(3,5).address+","+xlApp.range(cell).offset(8, 0).resize(2,10).address+","+ xlApp.range(cell).offset(13, 0).resize(3,4).address+","+ xlApp.range(cell).offset(19, 0).resize(2,9).address+")";
+        xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offs+1,-1].resize[1,10].Columns.Autofit();
+      }
 
       
       //xlApp.workbooks[wb].worksheets[ws].range[cell].offset[20, 10].formula2 = "=SectionProperties(" + xlApp.range(cell).offset(2, 0).resize(2, 15).address + "," + xlApp.range(cell).offset(6, 0).resize(2, 8).address + "," + xlApp.range(cell).offset(10, 0).resize(2, 14).address + "," + xlApp.workbooks[wb].worksheets[ws].range[cell].offset[14].resize[1, 19].address + ")";
@@ -320,8 +357,8 @@ namespace TESTEXDNA
         MessageBox.Show("Please select a single cell.");
         return;
       }
-      string[] anim1 = new string[] { "Update Cell Range", "Start Value", "End Value","Step Increment","Time delay between steps (ms)","Loop Count (capped at 10)"};
-      object[] anim2 = new object[] { ((Microsoft.Office.Interop.Excel.Range)animrange).Address, 1, 10,1,100,5};
+      string[] anim1 = new string[] { "Update Cell Range", "Start Value", "End Value","Step Increment","Time delay between steps (ms)","Loop Count (capped at 10)","Wobble"};
+      object[] anim2 = new object[] { ((Microsoft.Office.Interop.Excel.Range)animrange).Address, 1, 10,1,100,5,true};
       createinputblock(xlApp, wb, ws, cell, 0, "Animation Inputs", anim1, 0, anim2);
     }
     public void animrun(ExcelDna.Integration.CustomUI.IRibbonControl control)
@@ -348,11 +385,12 @@ namespace TESTEXDNA
       double delay=xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,5].value;
       string initval=Convert.ToString(xlApp.workbooks[wb].worksheets[ws].range[animcell].value);
       int loop=(int)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,6].value;
+      bool wobble=(bool)xlApp.workbooks[wb].worksheets[ws].range[cell].offset[2,7].value;
       loop=Math.Max(1,Math.Min(loop,10));
       step=Math.Abs(step)*Math.Sign(end-start);
       while (true)
       {
-        for (double val = start; val <= end; val += step)
+        for (double val = start; !(val<Math.Min(start, end)||val>Math.Max(start, end)); val += step)
         {
           xlApp.workbooks[wb].worksheets[ws].range[animcell].value = val;
           if (xlApp.ActiveSheet.name == ws)
@@ -364,6 +402,22 @@ namespace TESTEXDNA
             }
           }
           System.Threading.Thread.Sleep((int)delay);
+        }
+        if (wobble)
+        {
+          for (double val = end; !(val<Math.Min(start, end)||val>Math.Max(start, end)); val -= step)
+          {
+            xlApp.workbooks[wb].worksheets[ws].range[animcell].value = val;
+            if (xlApp.ActiveSheet.name == ws)
+            {
+              foreach (ChartObject chartObj in xlApp.ActiveSheet.ChartObjects())
+              {
+                  chartObj.Chart.Refresh();
+                  System.Windows.Forms.Application.DoEvents();
+              }
+            }
+            System.Threading.Thread.Sleep((int)delay);
+          }
         }
         loop--;
         if (loop==0)
@@ -413,6 +467,18 @@ namespace TESTEXDNA
       }
       xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst+2, -1].formula2 = "=structuralanalysisarrayindexes("+xlApp.workbooks[wb].worksheets[ws].range[cell].offset[offst+2].resize[scndrow+1].address+")";
     }
+  
   }
+  public static class ExcelMacros
+  {
+      [ExcelCommand(MenuName = "My Tools", MenuText = "Run Macro From Shape")]
+      public static void Showplotmacro()
+      {
+          string cller=ExcelDnaUtil.Application.Caller;
+          Microsoft.Office.Interop.Excel.Range rng= ExcelDnaUtil.Application.ActiveSheet.Shapes(cller).TopLeftCell;
+          PlotManager.ShowPlot(ExcelDnaUtil.Application.ActiveWorkbook.Name, ExcelDnaUtil.Application.ActiveSheet.Name,rng.Address);
+      }
+  }
+
 }
 

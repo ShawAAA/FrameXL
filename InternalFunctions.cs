@@ -2575,7 +2575,7 @@ namespace TESTEXDNA
             List<int> valids= new List<int>();
             for (int i = 0; i < inarray.GetLength(0); i++)
             {
-                if (!(inarray[i,0] is ExcelEmpty))
+                if (!(inarray[i,0] is ExcelEmpty || inarray[i,0] is null))
                 {
                     valids.Add(i);
                 }
@@ -2586,7 +2586,7 @@ namespace TESTEXDNA
             {
                 for (int j = 0; j < inarray.GetLength(1); j++)
                 {
-                    if (!(inarray[valid,j] is ExcelEmpty)&&!(inarray[valid,j] is ExcelMissing))
+                    if (!(inarray[valid,j] is ExcelEmpty)&&!(inarray[valid,j] is ExcelMissing)&&!(inarray[valid,j] is null))
                     {
                         outarray[rowit,j]=inarray[valid,j];
                     }
@@ -4385,6 +4385,21 @@ namespace TESTEXDNA
                 }
             }  
             return outarray;
+        }
+
+        public static string ColumnNumberToName(int col)
+        {
+            col++; // convert zero-based to 1-based
+            string name = "";
+
+            while (col > 0)
+            {
+                int rem = (col - 1) % 26;
+                name = (char)(rem + 'A') + name;
+                col = (col - 1) / 26;
+            }
+
+            return name;
         }
     }
     class matrixrender
