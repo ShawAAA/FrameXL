@@ -366,7 +366,7 @@ namespace TESTEXDNA
       dynamic xlApp = ExcelDnaUtil.Application;
       String wb = xlApp.ActiveWorkbook.name;
       String ws = xlApp.ActiveSheet.name;
-      object animrange = xlApp.InputBox("Please select theanimation you want to run (select the cell containing the heading 'Animation Inputs')","Select Animation:",Type:8);
+      object animrange = xlApp.InputBox("Please select the animation you want to run (select the cell containing the heading 'Animation Inputs')","Select Animation:",Type:8);
       if (animrange is bool)
       {
         MessageBox.Show("Selection cancelled.");

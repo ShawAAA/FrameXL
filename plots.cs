@@ -12,7 +12,6 @@ public class PlotWindow : Form
     public bool lcked=false;
     public string wb;
     public string ws;
-
     public ScottPlot.Plottables.Scatter nodescatter;
     public ScottPlot.Plottables.Scatter elementscatter;
 
@@ -21,7 +20,7 @@ public class PlotWindow : Form
     public string rng;
     public PlotWindow()
     {
-        Text = "Interactive Plot";
+        Text = "FrameXL Interactive Plot";
         Width = 900;
         Height = 700;
 
@@ -74,7 +73,19 @@ public class PlotWindow : Form
         try
         {
             object[,] effectcoords=TESTEXDNA.graphingtablefunctions.grapheffects(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[3]),cellvalues[0],cellvalues[1],cellvalues[4],cellvalues[5]);
+            string actionsdisps=cellvalues[1][0,1].ToString()??"";
+            string lgnd;
+            if (actionsdisps.ToLower() != "displacements")
+            {
+                lgnd="LC"+(cellvalues[1][0,0].ToString()??"")+" "+(cellvalues[1][0,2].ToString()??"")+" "+actionsdisps+" Local Direction "+(cellvalues[1][0,3].ToString()??"");
+            }
+            else
+            {
+                lgnd="LC"+(cellvalues[1][0,0].ToString()??"")+" "+(cellvalues[1][0,2].ToString()??"")+" "+actionsdisps+" Max/Min "+(cellvalues[1][0,3].ToString()??"")+" Dirn. Permutations";
+            }
             drawlines(effectcoords, "effects");
+            effectscatter.LegendText=lgnd;
+            PlotControl.Plot.Title(lgnd);
         }
         catch
         {
@@ -117,7 +128,6 @@ public class PlotWindow : Form
                 effectscatter.MarkerSize = 5;
                 effectscatter.LineWidth = 2;
                 effectscatter.Color = Colors.Blue;
-                effectscatter.LegendText = "Effects";
                 break;
             case null:
                 break;
@@ -175,8 +185,40 @@ public static class PlotManager
 
             _window.PlotControl.Plot.Axes.Rules.Clear();
             _window.PlotControl.Plot.Axes.Rules.Add(rule);
+            _window.PlotControl.Plot.XLabel("x (m)");
+             _window.PlotControl.Plot.YLabel("y (m)");
+
             _window.PlotControl.Refresh();
             UpdatePlotcontroller(rng);
+            ScottPlot.Plottables.Tooltip tooltip = _window.PlotControl.Plot.Add.Tooltip(new Coordinates(0, 0), "Hover over a point", new Coordinates(0, 0));
+            _window.PlotControl.MouseMove += (s, e) =>
+            {
+                Pixel mousePixel = new(e.Location.X, e.Location.Y);
+                Coordinates mouseLocation = _window.PlotControl.Plot.GetCoordinates(mousePixel);
+                DataPoint nearest = _window.nodescatter.Data.GetNearest(mouseLocation, _window.PlotControl.Plot.LastRender);
+  
+                    
+                // place the crosshair over the highlighted point
+                if (nearest.IsReal)
+                {
+                    tooltip.LabelText = $"Node: {nearest.Index:F0}\nx: {nearest.Coordinates.X:F2}\ny: {nearest.Coordinates.Y:F2}";
+                    tooltip.TipLocation = nearest.Coordinates;
+                    tooltip.LabelLocation= nearest.Coordinates;
+                    tooltip.LabelBackgroundColor = Colors.White.WithAlpha(1); 
+                    tooltip.FillColor = Colors.White.WithAlpha(1); 
+                    tooltip.LineColor = Colors.Transparent;
+                    tooltip.LabelOffsetX=40;
+                    tooltip.IsVisible = true;
+                    _window.PlotControl.Refresh();
+                }
+
+                // hide the crosshair when no point is selected
+                if (!nearest.IsReal)
+                {
+                    tooltip.IsVisible = false;
+                    _window.PlotControl.Refresh();
+                }
+            };
         }
     }
 
