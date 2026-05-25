@@ -4,6 +4,9 @@ using ExcelDna.Integration;
 using ScottPlot.Testing;
 using Microsoft.Office.Interop.Excel;
 using Microsoft.VisualBasic;
+using ScottPlot.Plottables;
+using System.Security.Cryptography.X509Certificates;
+using System.Drawing.Drawing2D;
 
 public class PlotWindow : Form
 {
@@ -14,10 +17,13 @@ public class PlotWindow : Form
     public string ws;
     public ScottPlot.Plottables.Scatter nodescatter;
     public ScottPlot.Plottables.Scatter elementscatter;
-
+    
     public ScottPlot.Plottables.Scatter effectscatter;
-
+    public Tooltip ntooltip;
+    public Tooltip etooltip;
+    public Tooltip gtooltip;
     public string rng;
+    public bool nodeorelselected;
     public PlotWindow()
     {
         Text = "FrameXL Interactive Plot";
@@ -99,6 +105,100 @@ public class PlotWindow : Form
         if (!lcked)
         {
             PlotControl.Plot.Axes.AutoScale();
+        }
+        ntooltip=PlotControl.Plot.Add.Tooltip(new Coordinates(0, 0), "Hover over a point", new Coordinates(0, 0));
+        etooltip=PlotControl.Plot.Add.Tooltip(new Coordinates(0, 0), "Hover over a point", new Coordinates(0, 0));
+        gtooltip=PlotControl.Plot.Add.Tooltip(new Coordinates(0, 0), "Hover over a point", new Coordinates(0, 0));
+        ntooltip.IsVisible=false;
+        etooltip.IsVisible=false;
+        gtooltip.IsVisible=false;
+        PlotControl.Refresh();
+    }
+    public void nttips(Pixel mousePixel)
+    {
+        Coordinates mouseLocation = PlotControl.Plot.GetCoordinates(mousePixel);
+        DataPoint nearest = nodescatter.Data.GetNearest(mouseLocation, PlotControl.Plot.LastRender);
+        if (nearest.IsReal)
+        {
+            ntooltip.LabelText = $"Node: {nearest.Index+1:F0}\nx: {nearest.Coordinates.X:F2}\ny: {nearest.Coordinates.Y:F2}";
+            ntooltip.TipLocation = nearest.Coordinates;
+            ntooltip.LabelLocation= nearest.Coordinates;
+            ntooltip.LabelBackgroundColor = Colors.White.WithAlpha(1); 
+            ntooltip.FillColor = Colors.White.WithAlpha(1); 
+            ntooltip.LineColor = Colors.Transparent;
+            ntooltip.LabelOffsetX=40;
+            ntooltip.LabelOffsetY=-40;
+            nodeorelselected=true;
+            ntooltip.IsVisible = true;
+        }
+        else
+        {
+            nodeorelselected=false;
+            ntooltip.IsVisible = false;
+        }
+        PlotControl.Refresh();
+    }
+    public void ettips(Pixel mousePixel)
+    {
+        Coordinates mouseLocation = PlotControl.Plot.GetCoordinates(mousePixel);
+        DataPoint nearest = elementscatter.Data.GetNearest(mouseLocation, PlotControl.Plot.LastRender);
+        double close;
+        List<(int,Coordinates)> closemax=new List<(int,Coordinates)>();
+        if (nearest.IsReal)
+        {
+            close=nearest.Coordinates.Distance(PlotControl.Plot.GetCoordinates(mousePixel));
+            int indx=1;
+            foreach (Coordinates coord in elementscatter.Data.GetScatterPoints())
+            {
+                if (close == coord.Distance(PlotControl.Plot.GetCoordinates(mousePixel)))
+                {
+                    closemax.Add((indx,coord));
+                }
+                indx=indx+1;
+            }
+            string elab="";
+            for (int i = 0; i < closemax.Count(); i++)
+            {
+                elab=elab+$"Element: {Math.Floor((double)closemax[i].Item1/3)+1:F0}\nEnd: {closemax[i].Item1%3:F0}\nx: {closemax[i].Item2.X:F2}\ny: {closemax[i].Item2.Y:F2}\n";
+            }
+            elab.TrimEnd();
+            etooltip.LabelText = elab;
+            etooltip.TipLocation = nearest.Coordinates;
+            etooltip.LabelLocation= nearest.Coordinates;
+            etooltip.LabelBackgroundColor = Colors.White.WithAlpha(1); 
+            etooltip.FillColor = Colors.White.WithAlpha(1); 
+            etooltip.LineColor = Colors.Transparent;
+            etooltip.LabelOffsetX=40;
+            etooltip.LabelOffsetY=25+35*closemax.Count;
+            nodeorelselected=true;
+            etooltip.IsVisible = true;
+        }
+        else
+        {
+            nodeorelselected=false;
+            etooltip.IsVisible = false;
+        }
+        PlotControl.Refresh();
+    }
+    public void gttips(Pixel mousePixel)
+    {
+        Coordinates mouseLocation = PlotControl.Plot.GetCoordinates(mousePixel);
+        DataPoint nearest = effectscatter.Data.GetNearest(mouseLocation, PlotControl.Plot.LastRender);
+        if (nearest.IsReal)
+        {
+            gtooltip.LabelText = $"Effect: {nearest.Index+1:F0}\nx: {nearest.Coordinates.X:F2}\ny: {nearest.Coordinates.Y:F2}";
+            gtooltip.TipLocation = nearest.Coordinates;
+            gtooltip.LabelLocation= nearest.Coordinates;
+            gtooltip.LabelBackgroundColor = Colors.White.WithAlpha(1); 
+            gtooltip.FillColor = Colors.White.WithAlpha(1); 
+            gtooltip.LineColor = Colors.Transparent;
+            gtooltip.LabelOffsetX=40;
+            gtooltip.LabelOffsetY=-40;
+            gtooltip.IsVisible = true;
+        }
+        else
+        {
+            gtooltip.IsVisible = false;
         }
         PlotControl.Refresh();
     }
@@ -187,36 +287,18 @@ public static class PlotManager
             _window.PlotControl.Plot.Axes.Rules.Add(rule);
             _window.PlotControl.Plot.XLabel("x (m)");
              _window.PlotControl.Plot.YLabel("y (m)");
-
+            
             _window.PlotControl.Refresh();
             UpdatePlotcontroller(rng);
-            ScottPlot.Plottables.Tooltip tooltip = _window.PlotControl.Plot.Add.Tooltip(new Coordinates(0, 0), "Hover over a point", new Coordinates(0, 0));
+            
             _window.PlotControl.MouseMove += (s, e) =>
             {
                 Pixel mousePixel = new(e.Location.X, e.Location.Y);
-                Coordinates mouseLocation = _window.PlotControl.Plot.GetCoordinates(mousePixel);
-                DataPoint nearest = _window.nodescatter.Data.GetNearest(mouseLocation, _window.PlotControl.Plot.LastRender);
-  
-                    
-                // place the crosshair over the highlighted point
-                if (nearest.IsReal)
+                _window.nttips(mousePixel);
+                _window.ettips(mousePixel);
+                if (!_window.nodeorelselected)
                 {
-                    tooltip.LabelText = $"Node: {nearest.Index:F0}\nx: {nearest.Coordinates.X:F2}\ny: {nearest.Coordinates.Y:F2}";
-                    tooltip.TipLocation = nearest.Coordinates;
-                    tooltip.LabelLocation= nearest.Coordinates;
-                    tooltip.LabelBackgroundColor = Colors.White.WithAlpha(1); 
-                    tooltip.FillColor = Colors.White.WithAlpha(1); 
-                    tooltip.LineColor = Colors.Transparent;
-                    tooltip.LabelOffsetX=40;
-                    tooltip.IsVisible = true;
-                    _window.PlotControl.Refresh();
-                }
-
-                // hide the crosshair when no point is selected
-                if (!nearest.IsReal)
-                {
-                    tooltip.IsVisible = false;
-                    _window.PlotControl.Refresh();
+                    _window.gttips(mousePixel);
                 }
             };
         }
