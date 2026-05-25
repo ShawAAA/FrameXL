@@ -125,7 +125,7 @@
             object[,] bloads)
 
         {
-            return graphingtablefunctions.grapheffects(interfacefunctions.filterarrayempties(nodes),interfacefunctions.filterarrayempties(Elements),results,requests,loads,bloads);
+            return graphingtablefunctions.grapheffects(interfacefunctions.filterarrayempties(nodes),interfacefunctions.filterarrayempties(Elements),results,requests,loads,bloads).Item1;
         }
         [ExcelFunction(IsVolatile =false,IsThreadSafe = true,IsHidden =false,Description = "dbg")]
         public static double Structuralanalysisdbg(
@@ -203,7 +203,16 @@
             if (caller is ExcelReference reference)
             {
                 string rng = "$"+toolclass.ColumnNumberToName(reference.ColumnFirst) + "$"+(reference.RowFirst + 1);
-                PlotManager.UpdatePlotcontroller(rng);
+                try
+                {
+                    PlotManager.UpdatePlotcontroller(rng);
+                }
+                catch
+                {
+                    MessageBox.Show("Graph attempted to update, but has produced an error and closed.");
+                    PlotManager.kill();
+                }
+                
                 
             }
             return "RENDER/RECALCULATE";

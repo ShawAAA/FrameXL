@@ -3128,7 +3128,7 @@ namespace TESTEXDNA
            return outarray;
         }
 
-        public static object[,] grapheffects(object[,] nodes,object[,] elements,object[,] results,object[,] requests,object[,] loads, object[,] bloads)
+        public static (object[,],object[,]) grapheffects(object[,] nodes,object[,] elements,object[,] results,object[,] requests,object[,] loads, object[,] bloads)
         {
             requests[0,5]=requests[0,1];
             requests[0,6]=requests[0,2];
@@ -3151,7 +3151,7 @@ namespace TESTEXDNA
                     dirnindex=0;
                     break;
             }
-            double scale=(double)requests[0,4];
+            double scale=Convert.ToDouble(requests[0,4]);
             double xmin=(double)nodes[0,0];
             double xmax=(double)nodes[0,0];
             double ymin=(double)nodes[0,1];
@@ -3236,7 +3236,7 @@ namespace TESTEXDNA
                     outholder=graphingtablefunctions.graphelementloads(nodes,elements, tabholder2,dirnindex,scale,graphrange); 
                     break;
             }
-            return outholder;
+            return (outholder,tabholder2);
 
         }
         public static object[,] graphnodeactions(object[,] nodes, object[,] tabularised,double scale,double graphrange)

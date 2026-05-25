@@ -17,13 +17,19 @@ public class PlotWindow : Form
     public string ws;
     public ScottPlot.Plottables.Scatter nodescatter;
     public ScottPlot.Plottables.Scatter elementscatter;
-    
+    public List<object[,]> cellvalues;
     public ScottPlot.Plottables.Scatter effectscatter;
+    public object[,] effectcoords;
+    public object[,] effectcoordszeroed;
+    public object tab2;
     public Tooltip ntooltip;
     public Tooltip etooltip;
     public Tooltip gtooltip;
     public string rng;
-    public bool nodeorelselected;
+    public bool nodeorelselected=false;
+    public bool effectselected=false;
+
+    public bool drageffct=false;
     public PlotWindow()
     {
         Text = "FrameXL Interactive Plot";
@@ -41,17 +47,19 @@ public class PlotWindow : Form
             lcked = !lcked;
         });
 
-        
     }
 
     public void UpdatePlot(string rng)
     {
         var plt = PlotControl.Plot;
         plt.Clear();
+        effectscatter=null;
+        nodescatter=null;
+        elementscatter=null;
         string frm=((string)ExcelDnaUtil.Application.Workbooks[wb].Worksheets[ws].Range[rng].Formula2).TrimEnd(")".ToCharArray());
         string[] splithold=frm.Split("graphvoid(");
         splithold=splithold[splithold.Length-1].Split(",");
-        List<object[,]> cellvalues=new List<object[,]>();
+        cellvalues=new List<object[,]>();
         object[,] holderarray1;
         object[,] holderarray2;
         object valholder;
@@ -78,7 +86,7 @@ public class PlotWindow : Form
         }
         try
         {
-            object[,] effectcoords=TESTEXDNA.graphingtablefunctions.grapheffects(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[3]),cellvalues[0],cellvalues[1],cellvalues[4],cellvalues[5]);
+            (effectcoords,tab2) =TESTEXDNA.graphingtablefunctions.grapheffects(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[3]),cellvalues[0],cellvalues[1],cellvalues[4],cellvalues[5]);
             string actionsdisps=cellvalues[1][0,1].ToString()??"";
             string lgnd;
             if (actionsdisps.ToLower() != "displacements")
@@ -95,13 +103,42 @@ public class PlotWindow : Form
         }
         catch
         {
-            
+            if (effectscatter != null)
+            {
+                plt.Remove(effectscatter);
+                effectselected=false;
+                effectscatter=null;
+            }
+        }
+        try
+        {
+            object[,] elementcoords=TESTEXDNA.graphingtablefunctions.elementcoords(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[3]));
+            drawlines(elementcoords, "elements");
+        }
+        catch
+        {
+            if (elementscatter != null)
+            {
+                plt.Remove(elementscatter);
+                nodeorelselected=false;
+                elementscatter=null;
+            }
+        }
+        try
+        {
+            object[,] nodecoords=TESTEXDNA.graphingtablefunctions.nodecoords(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]));
+            drawlines(nodecoords, "nodes");
+        }
+        catch
+        {
+            if (nodescatter != null)
+            {
+                plt.Remove(nodescatter);
+                nodeorelselected=false;
+                nodescatter=null;
+            }
         }
         
-        object[,] elementcoords=TESTEXDNA.graphingtablefunctions.elementcoords(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[3]));
-        drawlines(elementcoords, "elements");
-        object[,] nodecoords=TESTEXDNA.graphingtablefunctions.nodecoords(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]));
-        drawlines(nodecoords, "nodes");
         if (!lcked)
         {
             PlotControl.Plot.Axes.AutoScale();
@@ -194,10 +231,12 @@ public class PlotWindow : Form
             gtooltip.LineColor = Colors.Transparent;
             gtooltip.LabelOffsetX=40;
             gtooltip.LabelOffsetY=-40;
+            effectselected=true;
             gtooltip.IsVisible = true;
         }
         else
         {
+            effectselected=false;
             gtooltip.IsVisible = false;
         }
         PlotControl.Refresh();
@@ -294,13 +333,51 @@ public static class PlotManager
             _window.PlotControl.MouseMove += (s, e) =>
             {
                 Pixel mousePixel = new(e.Location.X, e.Location.Y);
-                _window.nttips(mousePixel);
-                _window.ettips(mousePixel);
-                if (!_window.nodeorelselected)
+                if (!_window.drageffct)
                 {
-                    _window.gttips(mousePixel);
+                    if (_window.nodescatter!=null)
+                    {
+                        _window.nttips(mousePixel);
+                    }
+                    if (_window.elementscatter!=null)
+                    {
+                        _window.ettips(mousePixel);
+                    }
+                    if (!_window.nodeorelselected && _window.effectscatter!=null)
+                    {
+                        _window.gttips(mousePixel);
+                    }
+                }
+                else
+                {
+                    
+                }
+                
+            };
+            _window.PlotControl.MouseDown += (object? sender, MouseEventArgs e) =>
+            {
+                if (_window.effectselected)
+                {
+                    _window.drageffct=true;
+                    object[,] zrorequest=(object[,])_window.cellvalues[1].Clone();
+                    zrorequest[0,4]=0;
+                    _window.effectcoordszeroed=TESTEXDNA.graphingtablefunctions.grapheffects(TESTEXDNA.interfacefunctions.filterarrayempties(_window.cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(_window.cellvalues[3]),_window.cellvalues[0],zrorequest,_window.cellvalues[4],_window.cellvalues[5]).Item1;
+                    _window.PlotControl.UserInputProcessor.Disable();
+                    _window.gtooltip.IsVisible = false;
+                    _window.PlotControl.Refresh();
+                }
+                
+            };
+            _window.PlotControl.MouseUp += (object? sender, MouseEventArgs e) =>
+            {
+                if (_window.effectselected)
+                {
+                    _window.drageffct=false;
+                    _window.PlotControl.UserInputProcessor.Enable();
+                    _window.gtooltip.IsVisible = true;
                 }
             };
+
         }
     }
 
@@ -309,6 +386,13 @@ public static class PlotManager
         if (!(_window == null || _window.IsDisposed) )
         {
             _window?.UpdatePlot(rng);
+        }
+    }
+    public static void kill()
+    {
+        if (!(_window == null || _window.IsDisposed) )
+        {
+            _window.Dispose();
         }
     }
 }

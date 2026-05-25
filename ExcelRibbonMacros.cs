@@ -476,7 +476,16 @@ namespace TESTEXDNA
       {
           string cller=ExcelDnaUtil.Application.Caller;
           Microsoft.Office.Interop.Excel.Range rng= ExcelDnaUtil.Application.ActiveSheet.Shapes(cller).TopLeftCell;
-          PlotManager.ShowPlot(ExcelDnaUtil.Application.ActiveWorkbook.Name, ExcelDnaUtil.Application.ActiveSheet.Name,rng.Address);
+          try
+          {
+            PlotManager.ShowPlot(ExcelDnaUtil.Application.ActiveWorkbook.Name, ExcelDnaUtil.Application.ActiveSheet.Name,rng.Address);
+          }
+          catch
+          {
+            MessageBox.Show("Graph attempted to open, but has produced an error and closed.");
+            PlotManager.kill();
+          }
+          
       }
   }
 
