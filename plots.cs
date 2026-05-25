@@ -7,6 +7,9 @@ using Microsoft.VisualBasic;
 using ScottPlot.Plottables;
 using System.Security.Cryptography.X509Certificates;
 using System.Drawing.Drawing2D;
+using Microsoft.Vbe.Interop;
+using ScottPlot.Interactivity.UserActionResponses;
+using System.Threading;
 
 public class PlotWindow : Form
 {
@@ -28,8 +31,11 @@ public class PlotWindow : Form
     public string rng;
     public bool nodeorelselected=false;
     public bool effectselected=false;
+    public DataPoint dragpt;
 
     public bool drageffct=false;
+
+    public bool boing=true;
     public PlotWindow()
     {
         Text = "FrameXL Interactive Plot";
@@ -45,6 +51,14 @@ public class PlotWindow : Form
         PlotControl.Menu.Add("Toggle Auto rescale on refresh", (plt) =>
         {
             lcked = !lcked;
+        });
+        PlotControl.Menu.Add("Toggle drag snapback", (plt) =>
+        {
+            if (!boing)
+            {
+                snpback();
+            }
+            boing = !boing;
         });
 
     }
@@ -107,6 +121,7 @@ public class PlotWindow : Form
             {
                 plt.Remove(effectscatter);
                 effectselected=false;
+                drageffct=false;
                 effectscatter=null;
             }
         }
@@ -166,6 +181,7 @@ public class PlotWindow : Form
             ntooltip.LabelOffsetX=40;
             ntooltip.LabelOffsetY=-40;
             nodeorelselected=true;
+            gtooltip.IsVisible=false;
             ntooltip.IsVisible = true;
         }
         else
@@ -208,6 +224,7 @@ public class PlotWindow : Form
             etooltip.LabelOffsetX=40;
             etooltip.LabelOffsetY=25+35*closemax.Count;
             nodeorelselected=true;
+            gtooltip.IsVisible=false;
             etooltip.IsVisible = true;
         }
         else
@@ -267,6 +284,7 @@ public class PlotWindow : Form
                 effectscatter.MarkerSize = 5;
                 effectscatter.LineWidth = 2;
                 effectscatter.Color = Colors.Blue;
+                plt.MoveToBack(effectscatter);
                 break;
             case null:
                 break;
@@ -295,6 +313,79 @@ public class PlotWindow : Form
         }
         return (x,y);
     }
+    public void snpback()
+    {
+        int crindex=0;
+        double ptdist=0;
+        double ptdistzero=0;
+        double ptdistoe=0;
+        foreach (Coordinates currcoord in effectscatter.Data.GetScatterPoints())
+        {
+            if (currcoord.X != double.MaxValue)
+            {
+                ptdist=Math.Sqrt(Math.Pow(currcoord.X-Convert.ToDouble(effectcoords[crindex,0]),2)+Math.Pow(currcoord.Y-Convert.ToDouble(effectcoords[crindex,1]),2));
+            }
+            else
+            {
+                ptdist=0;
+            }
+            if (ptdist > 0)
+            {
+                ptdistzero=Math.Sqrt(Math.Pow(currcoord.X-Convert.ToDouble(effectcoordszeroed[crindex,0]),2)+Math.Pow(currcoord.Y-Convert.ToDouble(effectcoordszeroed[crindex,1]),2));
+                ptdistoe=Math.Sqrt(Math.Pow(Convert.ToDouble(effectcoords[crindex,0])-Convert.ToDouble(effectcoordszeroed[crindex,0]),2)+Math.Pow(Convert.ToDouble(effectcoords[crindex,1])-Convert.ToDouble(effectcoordszeroed[crindex,1]),2));
+                break;
+            }
+            crindex=crindex+1;
+        }
+        if (ptdist <= 0 || ptdistzero==ptdist)
+        {
+            PlotControl.Plot.Remove(effectscatter);
+            effectscatter=null;
+            drawlines(effectcoords, "effects");
+            etooltip.IsVisible=false;
+            PlotControl.Refresh();
+        }
+        else
+        {
+            double A;
+            if (ptdistoe < ptdist)
+            {
+               A=ptdistzero/(ptdistzero-ptdist)-1; 
+            }
+            else
+            {
+               A=ptdistzero/(ptdistoe)-1; 
+            }
+            
+            double lambda=10;
+            double angfreq=20;
+            double time;
+            double t;
+            for (int j = 0; j < 50; j++)
+            {
+                time=j*0.01;
+                t=(A*Math.Exp(-lambda*time)*Math.Cos(angfreq*time)+1);
+                object[,] effectnew=(object[,])effectcoordszeroed.Clone();
+                for (int i = 0; i < effectnew.GetLength(0); i++)
+                {
+                    if (effectcoords[i,0] is not ExcelError.ExcelErrorNA)
+                    {
+                        effectnew[i,0]=Convert.ToDouble(effectnew[i,0])+t*(Convert.ToDouble(effectcoords[i,0])-Convert.ToDouble(effectcoordszeroed[i,0]));
+                        effectnew[i,1]=Convert.ToDouble(effectnew[i,1])+t*(Convert.ToDouble(effectcoords[i,1])-Convert.ToDouble(effectcoordszeroed[i,1]));
+                    }
+                }
+                PlotControl.Plot.Remove(effectscatter);
+                effectscatter=null;
+                drawlines(effectnew, "effects");
+                gtooltip.IsVisible=false;
+                PlotControl.Refresh();
+                Thread.Sleep(5); 
+            }
+            
+        }
+        
+    }
+
 }
 
 public static class PlotManager
@@ -325,7 +416,7 @@ public static class PlotManager
             _window.PlotControl.Plot.Axes.Rules.Clear();
             _window.PlotControl.Plot.Axes.Rules.Add(rule);
             _window.PlotControl.Plot.XLabel("x (m)");
-             _window.PlotControl.Plot.YLabel("y (m)");
+            _window.PlotControl.Plot.YLabel("y (m)");
             
             _window.PlotControl.Refresh();
             UpdatePlotcontroller(rng);
@@ -350,7 +441,31 @@ public static class PlotManager
                 }
                 else
                 {
-                    
+                    Coordinates mc=_window.PlotControl.Plot.GetCoordinates(mousePixel);
+                    Coordinates oc=new Coordinates(Convert.ToDouble(_window.effectcoordszeroed[_window.dragpt.Index,0]),Convert.ToDouble(_window.effectcoordszeroed[_window.dragpt.Index,1]));
+                    Coordinates ec=new Coordinates(Convert.ToDouble(_window.effectcoords[_window.dragpt.Index,0])-oc.X,Convert.ToDouble(_window.effectcoords[_window.dragpt.Index,1])-oc.Y);
+                    double t;
+                    if ((ec.X * ec.X + ec.Y * ec.Y) == 0)
+                    {
+                        t=1;
+                    }
+                    else
+                    {
+                        t=((mc.X-oc.X)*ec.X+(mc.Y-oc.Y)*ec.Y)/(ec.X*ec.X+ec.Y*ec.Y);
+                    }
+                    object[,] effectnew=(object[,])_window.effectcoordszeroed.Clone();
+                    for (int i = 0; i < effectnew.GetLength(0); i++)
+                    {
+                        if (_window.effectcoords[i,0] is not ExcelError.ExcelErrorNA)
+                        {
+                            effectnew[i,0]=Convert.ToDouble(effectnew[i,0])+t*(Convert.ToDouble(_window.effectcoords[i,0])-Convert.ToDouble(_window.effectcoordszeroed[i,0]));
+                            effectnew[i,1]=Convert.ToDouble(effectnew[i,1])+t*(Convert.ToDouble(_window.effectcoords[i,1])-Convert.ToDouble(_window.effectcoordszeroed[i,1]));
+                        }
+                    }
+                    _window.PlotControl.Plot.Remove(_window.effectscatter);
+                    _window.effectscatter=null;
+                    _window.drawlines(effectnew, "effects");
+                    _window.PlotControl.Refresh();
                 }
                 
             };
@@ -364,17 +479,22 @@ public static class PlotManager
                     _window.effectcoordszeroed=TESTEXDNA.graphingtablefunctions.grapheffects(TESTEXDNA.interfacefunctions.filterarrayempties(_window.cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(_window.cellvalues[3]),_window.cellvalues[0],zrorequest,_window.cellvalues[4],_window.cellvalues[5]).Item1;
                     _window.PlotControl.UserInputProcessor.Disable();
                     _window.gtooltip.IsVisible = false;
+                    _window.dragpt = _window.effectscatter.Data.GetNearest(_window.PlotControl.Plot.GetCoordinates(new(e.Location.X, e.Location.Y)), _window.PlotControl.Plot.LastRender);
                     _window.PlotControl.Refresh();
                 }
                 
             };
             _window.PlotControl.MouseUp += (object? sender, MouseEventArgs e) =>
             {
-                if (_window.effectselected)
+                if (_window.effectselected && _window.drageffct)
                 {
                     _window.drageffct=false;
                     _window.PlotControl.UserInputProcessor.Enable();
                     _window.gtooltip.IsVisible = true;
+                    if (_window.boing)
+                    {
+                        _window.snpback();
+                    }
                 }
             };
 
