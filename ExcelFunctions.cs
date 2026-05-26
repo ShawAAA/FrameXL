@@ -1,6 +1,7 @@
 ﻿namespace TESTEXDNA
 {
     using ExcelDna.Integration;
+    using System.Threading;
 
     public static class ExcelFunctions
     {
@@ -205,7 +206,8 @@
                 string rng = "$"+toolclass.ColumnNumberToName(reference.ColumnFirst) + "$"+(reference.RowFirst + 1);
                 try
                 {
-                    PlotManager.UpdatePlotcontroller(rng);
+                    PlotManager.takeinp(new List<object[,]>() {results,requests,nodes,elements,loads,bloads});
+                    PlotManager.UpdatePlotcontroller();
                 }
                 catch
                 {

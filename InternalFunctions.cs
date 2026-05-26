@@ -865,7 +865,7 @@ namespace TESTEXDNA
                 outarray[i,0]=holder;
             }
             double ln=0;
-            double maxlength=32767;
+            double maxlength=32750;
             for (int i = 0; i < outarray.GetLength(0); i++)
             {
                 ln=Math.Max(ln,outarray[i,0].Length);
@@ -3777,7 +3777,7 @@ namespace TESTEXDNA
             string txtholder="";
             for (int i = 0; i < results.GetLength(1); i++)
             {
-                txtholder=txtholder+results[index,i];
+                txtholder=txtholder+(Convert.ToString(results[index,i])??"").Trim('\0');
             }
             txtholder=txtholder.Split("*?*",2)[1];
             List<object[]> outlist=new List<object[]>();

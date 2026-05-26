@@ -32,10 +32,11 @@ public class PlotWindow : Form
     public bool nodeorelselected=false;
     public bool effectselected=false;
     public DataPoint dragpt;
-
+    public string lgndholder;
     public bool drageffct=false;
 
     public bool boing=true;
+    public bool currentboing=false;
     public PlotWindow()
     {
         Text = "FrameXL Interactive Plot";
@@ -56,48 +57,22 @@ public class PlotWindow : Form
         {
             if (!boing)
             {
+                currentboing=true;
                 snpback();
+                currentboing=false;
             }
             boing = !boing;
         });
 
     }
 
-    public void UpdatePlot(string rng)
+    public void UpdatePlot()
     {
         var plt = PlotControl.Plot;
         plt.Clear();
         effectscatter=null;
         nodescatter=null;
         elementscatter=null;
-        string frm=((string)ExcelDnaUtil.Application.Workbooks[wb].Worksheets[ws].Range[rng].Formula2).TrimEnd(")".ToCharArray());
-        string[] splithold=frm.Split("graphvoid(");
-        splithold=splithold[splithold.Length-1].Split(",");
-        cellvalues=new List<object[,]>();
-        object[,] holderarray1;
-        object[,] holderarray2;
-        object valholder;
-        Array arr;
-        for (int i=0; i<splithold.Length; i++)
-        {
-            valholder=ExcelDnaUtil.Application.Workbooks[wb].Worksheets[ws].Range[splithold[i]].Value;
-            if (valholder is not object[,])
-            {
-                arr=Array.CreateInstance(typeof(string), new int[] {1,1}, new int[]{1,1});
-                arr.SetValue(valholder.ToString(),1,1);
-                valholder=arr;
-            }
-            holderarray1=(object[,])valholder;
-            holderarray2=new object[holderarray1.GetLength(0),holderarray1.GetLength(1)];
-            for (int j=0; j<holderarray1.GetLength(0); j++)
-            {
-                for (int k=0; k<holderarray1.GetLength(1); k++)
-                {
-                    holderarray2[j,k]=holderarray1[j+1,k+1]; 
-                }
-            }
-            cellvalues.Add(holderarray2);
-        }
         try
         {
             (effectcoords,tab2) =TESTEXDNA.graphingtablefunctions.grapheffects(TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[2]),TESTEXDNA.interfacefunctions.filterarrayempties(cellvalues[3]),cellvalues[0],cellvalues[1],cellvalues[4],cellvalues[5]);
@@ -113,6 +88,7 @@ public class PlotWindow : Form
             }
             drawlines(effectcoords, "effects");
             effectscatter.LegendText=lgnd;
+            lgndholder=lgnd;
             PlotControl.Plot.Title(lgnd);
         }
         catch
@@ -172,7 +148,7 @@ public class PlotWindow : Form
         DataPoint nearest = nodescatter.Data.GetNearest(mouseLocation, PlotControl.Plot.LastRender);
         if (nearest.IsReal)
         {
-            ntooltip.LabelText = $"Node: {nearest.Index+1:F0}\nx: {nearest.Coordinates.X:F2}\ny: {nearest.Coordinates.Y:F2}";
+            ntooltip.LabelText = $"Node: {nearest.Index+1:F0},\nx: {nearest.Coordinates.X:F2},\ny: {nearest.Coordinates.Y:F2}.";
             ntooltip.TipLocation = nearest.Coordinates;
             ntooltip.LabelLocation= nearest.Coordinates;
             ntooltip.LabelBackgroundColor = Colors.White.WithAlpha(1); 
@@ -212,7 +188,7 @@ public class PlotWindow : Form
             string elab="";
             for (int i = 0; i < closemax.Count(); i++)
             {
-                elab=elab+$"Element: {Math.Floor((double)closemax[i].Item1/3)+1:F0}\nEnd: {closemax[i].Item1%3:F0}\nx: {closemax[i].Item2.X:F2}\ny: {closemax[i].Item2.Y:F2}\n";
+                elab=elab+$"Element: {Math.Floor((double)closemax[i].Item1/3)+1:F0},\nEnd: {closemax[i].Item1%3:F0}.\n";
             }
             elab.TrimEnd();
             etooltip.LabelText = elab;
@@ -222,7 +198,7 @@ public class PlotWindow : Form
             etooltip.FillColor = Colors.White.WithAlpha(1); 
             etooltip.LineColor = Colors.Transparent;
             etooltip.LabelOffsetX=40;
-            etooltip.LabelOffsetY=25+35*closemax.Count;
+            etooltip.LabelOffsetY=15+20*closemax.Count;
             nodeorelselected=true;
             gtooltip.IsVisible=false;
             etooltip.IsVisible = true;
@@ -321,7 +297,7 @@ public class PlotWindow : Form
         double ptdistoe=0;
         foreach (Coordinates currcoord in effectscatter.Data.GetScatterPoints())
         {
-            if (currcoord.X != double.MaxValue)
+            if (currcoord.X != double.MaxValue && !double.IsNaN(currcoord.X))
             {
                 ptdist=Math.Sqrt(Math.Pow(currcoord.X-Convert.ToDouble(effectcoords[crindex,0]),2)+Math.Pow(currcoord.Y-Convert.ToDouble(effectcoords[crindex,1]),2));
             }
@@ -342,7 +318,8 @@ public class PlotWindow : Form
             PlotControl.Plot.Remove(effectscatter);
             effectscatter=null;
             drawlines(effectcoords, "effects");
-            etooltip.IsVisible=false;
+            effectscatter.LegendText=lgndholder;
+            gtooltip.IsVisible=false;
             PlotControl.Refresh();
         }
         else
@@ -361,7 +338,7 @@ public class PlotWindow : Form
             double angfreq=20;
             double time;
             double t;
-            for (int j = 0; j < 50; j++)
+            for (int j = 0; j < 75; j++)
             {
                 time=j*0.01;
                 t=(A*Math.Exp(-lambda*time)*Math.Cos(angfreq*time)+1);
@@ -377,10 +354,17 @@ public class PlotWindow : Form
                 PlotControl.Plot.Remove(effectscatter);
                 effectscatter=null;
                 drawlines(effectnew, "effects");
+                effectscatter.LegendText=lgndholder;
                 gtooltip.IsVisible=false;
                 PlotControl.Refresh();
                 Thread.Sleep(5); 
             }
+            PlotControl.Plot.Remove(effectscatter);
+            effectscatter=null;
+            drawlines(effectcoords, "effects");
+            effectscatter.LegendText=lgndholder;
+            gtooltip.IsVisible=false;
+            PlotControl.Refresh();
             
         }
         
@@ -417,9 +401,40 @@ public static class PlotManager
             _window.PlotControl.Plot.Axes.Rules.Add(rule);
             _window.PlotControl.Plot.XLabel("x (m)");
             _window.PlotControl.Plot.YLabel("y (m)");
+            _window.PlotControl.Plot.Grid.XAxisStyle.IsVisible = false;
+            _window.PlotControl.Plot.Grid.YAxisStyle.IsVisible = false;
+
             
             _window.PlotControl.Refresh();
-            UpdatePlotcontroller(rng);
+            string frm=((string)ExcelDnaUtil.Application.Workbooks[wb].Worksheets[ws].Range[rng].Formula2).TrimEnd(")".ToCharArray());
+            string[] splithold=frm.Split("graphvoid(");
+            splithold=splithold[splithold.Length-1].Split(",");
+            _window.cellvalues=new List<object[,]>();
+            object[,] holderarray1;
+            object[,] holderarray2;
+            object valholder;
+            Array arr;
+            for (int i=0; i<splithold.Length; i++)
+            {
+                valholder=ExcelDnaUtil.Application.Workbooks[wb].Worksheets[ws].Range[splithold[i]].Value;
+                if (valholder is not object[,])
+                {
+                    arr=Array.CreateInstance(typeof(string), new int[] {1,1}, new int[]{1,1});
+                    arr.SetValue(valholder.ToString(),1,1);
+                    valholder=arr;
+                }
+                holderarray1=(object[,])valholder;
+                holderarray2=new object[holderarray1.GetLength(0),holderarray1.GetLength(1)];
+                for (int j=0; j<holderarray1.GetLength(0); j++)
+                {
+                    for (int k=0; k<holderarray1.GetLength(1); k++)
+                    {
+                        holderarray2[j,k]=holderarray1[j+1,k+1]; 
+                    }
+                }
+                _window.cellvalues.Add(holderarray2);
+            }
+            UpdatePlotcontroller();
             
             _window.PlotControl.MouseMove += (s, e) =>
             {
@@ -439,7 +454,7 @@ public static class PlotManager
                         _window.gttips(mousePixel);
                     }
                 }
-                else
+                else if (!_window.currentboing)
                 {
                     Coordinates mc=_window.PlotControl.Plot.GetCoordinates(mousePixel);
                     Coordinates oc=new Coordinates(Convert.ToDouble(_window.effectcoordszeroed[_window.dragpt.Index,0]),Convert.ToDouble(_window.effectcoordszeroed[_window.dragpt.Index,1]));
@@ -449,7 +464,7 @@ public static class PlotManager
                     {
                         t=1;
                     }
-                    else
+                    else 
                     {
                         t=((mc.X-oc.X)*ec.X+(mc.Y-oc.Y)*ec.Y)/(ec.X*ec.X+ec.Y*ec.Y);
                     }
@@ -465,13 +480,14 @@ public static class PlotManager
                     _window.PlotControl.Plot.Remove(_window.effectscatter);
                     _window.effectscatter=null;
                     _window.drawlines(effectnew, "effects");
+                    _window.effectscatter.LegendText=_window.lgndholder;
                     _window.PlotControl.Refresh();
                 }
                 
             };
             _window.PlotControl.MouseDown += (object? sender, MouseEventArgs e) =>
             {
-                if (_window.effectselected)
+                if (_window.effectselected && !_window.drageffct && !_window.currentboing)
                 {
                     _window.drageffct=true;
                     object[,] zrorequest=(object[,])_window.cellvalues[1].Clone();
@@ -486,26 +502,26 @@ public static class PlotManager
             };
             _window.PlotControl.MouseUp += (object? sender, MouseEventArgs e) =>
             {
-                if (_window.effectselected && _window.drageffct)
+                if (_window.effectselected && _window.drageffct && !_window.currentboing)
                 {
-                    _window.drageffct=false;
                     _window.PlotControl.UserInputProcessor.Enable();
                     _window.gtooltip.IsVisible = true;
                     if (_window.boing)
                     {
                         _window.snpback();
                     }
+                    _window.drageffct=false;
                 }
             };
 
         }
     }
 
-    public static void UpdatePlotcontroller(string rng)
+    public static void UpdatePlotcontroller()
     {
         if (!(_window == null || _window.IsDisposed) )
         {
-            _window?.UpdatePlot(rng);
+            _window?.UpdatePlot();
         }
     }
     public static void kill()
@@ -513,6 +529,13 @@ public static class PlotManager
         if (!(_window == null || _window.IsDisposed) )
         {
             _window.Dispose();
+        }
+    }
+    public static void takeinp(List<object[,]> inp)
+    {
+        if (!(_window == null || _window.IsDisposed) )
+        {
+            _window.cellvalues=new List<object[,]>(inp);
         }
     }
 }
