@@ -1246,12 +1246,16 @@ namespace TESTEXDNA
                     if (scanindex==-1 || j == scanindex)
                     {
                         prediction=outmatrix[i-1,j]+(outmatrix[i+1,j]-outmatrix[i-1,j])*(outcha.ElementAt(i)-outcha.ElementAt(i-1))/(outcha.ElementAt(i+1)-outcha.ElementAt(i-1));
-                        if (outmatrix[i, j] == 0 && Math.Abs(prediction-outmatrix[i, j])>Math.Max(Math.Abs(outmatrix[i-1,j]),Math.Abs(outmatrix[i+1,j])*0.01))
+                        if (outmatrix[i, j] == 0)
                         {
-                            isreduceable=false;
-                            break;
+                            if (Math.Abs(prediction-outmatrix[i, j]) > Math.Max(Math.Max(Math.Abs(outmatrix[i - 1, j]), Math.Abs(outmatrix[i + 1, j]) * 0.01),Math.Pow(10,-10)))
+                            {
+                                isreduceable=false;
+                                break;
+                            }
+                           
                         }
-                        else if (Math.Abs((prediction-outmatrix[i, j])/outmatrix[i, j]) > 0.01)
+                        else if (Math.Abs((prediction-outmatrix[i, j])/outmatrix[i, j]) > 0.01 && Math.Abs(outmatrix[i, j])>Math.Pow(10,-10))
                         {
                             isreduceable=false;
                             break;
@@ -1581,6 +1585,7 @@ namespace TESTEXDNA
                         bloads=new List<double[,]>();
                     }
                     effectmatrix=stiffnessmatcalcs.beamdispcalc(bloads,cha,axialforce,axialtrans,bendingtransforce,bendingmoment,rotation,bendingtrans,beamgeom[elementlist[j]-1,4],beamgeom[elementlist[j]-1,5],beamgeom[elementlist[j]-1,0]);
+                    //effectmatrix=stiffnessmatcalcs.localtoglobal(effectmatrix,beamgeom[elementlist[j]-1,3]);
                     mbdict.Add(elementlist[j],new List<(SortedSet<double>,Matrix<double>)> {(cha,effectmatrix)});
                     
                 }
@@ -1641,6 +1646,18 @@ namespace TESTEXDNA
             }
             
             return outstring;
+        }
+        public static Matrix<double> localtoglobal(Matrix<double> inmatrix, double angle)
+        {
+            Matrix<double> outmatrix=inmatrix.Clone();
+            double c=Math.Cos(angle);
+            double s=Math.Sin(angle);
+            for (int i = 0; i < inmatrix.RowCount; i++)
+            {
+                outmatrix[i,0]=inmatrix[i,0]*c-inmatrix[i,1]*s;
+                outmatrix[i,1]=inmatrix[i,0]*s+inmatrix[i,1]*c;
+            }
+            return outmatrix;
         }
         public static string actionelementrebuild(double[,] beamgeom,Dictionary<int,Matrix<double>> resultsholder,Dictionary<int,Dictionary<int,List<double[,]>>> beamloadsholder, Dictionary<int,Dictionary<int,SortedSet<double>>> beamchapoints,List<int> lclist, List<int> elementlist, int totaldof,SortedSet<int> lcombset,Dictionary<int,List<object>> combsdict1,Dictionary<int,List<double[]>> combsdict2)
         {
