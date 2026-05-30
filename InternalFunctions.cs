@@ -1232,7 +1232,7 @@ namespace TESTEXDNA
             
             return outstring;
         }
-        public static (SortedSet<double>,Matrix<double>) linearise(Matrix<double> inmatrix,  SortedSet<double> cha)
+        public static (SortedSet<double>,Matrix<double>) linearise(Matrix<double> inmatrix,  SortedSet<double> cha, int scanindex=-1)
         {
             Matrix<double> outmatrix=inmatrix.Clone();
             SortedSet<double> outcha=new SortedSet<double>(cha);
@@ -1243,16 +1243,19 @@ namespace TESTEXDNA
                 isreduceable=true;
                 for(int j = 0; j < outmatrix.ColumnCount; j++)
                 {
-                    prediction=outmatrix[i-1,j]+(outmatrix[i+1,j]-outmatrix[i-1,j])*(outcha.ElementAt(i)-outcha.ElementAt(i-1))/(outcha.ElementAt(i+1)-outcha.ElementAt(i-1));
-                    if (outmatrix[i, j] == 0 && Math.Abs(prediction-outmatrix[i, j])>Math.Max(Math.Abs(outmatrix[i-1,j]),Math.Abs(outmatrix[i+1,j])*0.01))
+                    if (scanindex==-1 || j == scanindex)
                     {
-                        isreduceable=false;
-                        break;
-                    }
-                    else if (Math.Abs((prediction-outmatrix[i, j])/outmatrix[i, j]) > 0.01)
-                    {
-                        isreduceable=false;
-                        break;
+                        prediction=outmatrix[i-1,j]+(outmatrix[i+1,j]-outmatrix[i-1,j])*(outcha.ElementAt(i)-outcha.ElementAt(i-1))/(outcha.ElementAt(i+1)-outcha.ElementAt(i-1));
+                        if (outmatrix[i, j] == 0 && Math.Abs(prediction-outmatrix[i, j])>Math.Max(Math.Abs(outmatrix[i-1,j]),Math.Abs(outmatrix[i+1,j])*0.01))
+                        {
+                            isreduceable=false;
+                            break;
+                        }
+                        else if (Math.Abs((prediction-outmatrix[i, j])/outmatrix[i, j]) > 0.01)
+                        {
+                            isreduceable=false;
+                            break;
+                        }
                     }
                 }
                 if (isreduceable)
